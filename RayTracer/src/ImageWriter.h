@@ -2,10 +2,10 @@
 
 #include "RayTracer.h"
 
+#include "Image.h"
+
 #include <fstream>
 #include <string>
-
-class Image;
 
 enum class ImageType
 {

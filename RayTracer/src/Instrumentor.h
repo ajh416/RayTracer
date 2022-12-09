@@ -6,8 +6,6 @@
 
 class InstrumentationTimer
 {
-	friend class Instrumentor;
-
 	struct InstrumentationResult
 	{
 		std::string_view Name;
@@ -37,9 +35,4 @@ private:
 	std::string m_Name;
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_StartTimepoint;
 	bool m_Stopped = false;
-};
-
-class Instrumentor
-{
-
 };

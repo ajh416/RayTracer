@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "Timer.h"
+//#include "Timer.h"
 
 #define FLOAT_AS_DOUBLE
 
@@ -28,9 +28,10 @@ static const Float PiOver2 = 1.57079632679489661923;
 static const Float PiOver4 = 0.78539816339744830961;
 static const Float Sqrt2 = 1.41421356237309504880;
 
+#define NDEBUG
 #ifndef NDEBUG
 
-#define PROFILE_FUNCTION() Timer t##__LINE__(##__FUNCSIG__);
+#define PROFILE_FUNCTION() Timer t##__LINE__(##__func__);
 #define PROFILE_SCOPE(name) Timer t##__LINE__(#name);
 
 #else
@@ -82,9 +83,11 @@ namespace Utils
 		return std::log(x) * invLog2;
 	}
 
+	/* Does not compile with gcc
 	inline int Log2Int(uint32_t v) {
 		return 31 - __lzcnt(v);
 	}
+	*/
 
 	template <typename T>
 	inline bool IsPowerOf2(T v) {
@@ -99,9 +102,11 @@ namespace Utils
 		return v + 1;
 	}
 
+	/* Does not compile with gcc
 	inline int CountTrailingZeros(uint32_t v) {
 		return _tzcnt_u32(v);
 	}
+	*/
 }
 
 //
@@ -110,7 +115,11 @@ namespace Utils
 
 #include "Logger.h"
 
+#ifdef _WIN32
 #define ASSERT(x, ...) if (!x) { ::Logger::Get().Error(__VA_ARGS__); __debugbreak(); }
+#else
+#define ASSERT(x, ...) if (!x) { ::Logger::Get().Error(__VA_ARGS__); }
+#endif
 
 #ifdef ENABLE_LOG
 
@@ -122,7 +131,11 @@ namespace Utils
 
 #define LOG_ERROR(...) ::Logger::Get().Error(__VA_ARGS__)
 
-#define LOG_CRITICAL(...) ::Logger::Get().Critical(__VA_ARGS__); __debugbreak()
+#ifdef _WIN32
+#define LOG_CRITICAL(...) ::Logger::Get().Critical(__VA_ARGS__); __debugbreak();
+#else
+#define LOG_CRITICAL(...) ::Logger::Get().Critical(__VA_ARGS__);
+#endif
 
 #else
 

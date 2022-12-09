@@ -187,57 +187,49 @@ public:
 		return x != p.x || y != p.y || z != p.z;
 	}
 
-	template <typename T>
 	inline Float Distance(const Point3<T>& p1, const Point3<T>& p2)
 	{
 		return (p1 - p2).Length();
 	}
 
-	template <typename T>
 	inline Float DistanceSquared(const Point3<T>& p1, const Point3<T>& p2)
 	{
 		return pow((p1 - p2).Length(), 2);
 	}
 
-	template <typename T> Point3<T>
+Point3<T>
 	Lerp(Float t, const Point3<T>& p0, const Point3<T>& p1)
 	{
 		return (1 - t) * p0 + t * p1;
 	}
 
-	template <typename T>
 	Point3<T> Min(const Point3<T>& p1, const Point3<T>& p2)
 	{
 		return Point3<T>(std::min(p1.x, p2.x), std::min(p1.y, p2.y),
 			std::min(p1.z, p2.z));
 	}
 
-	template <typename T>
 	Point3<T> Max(const Point3<T>& p1, const Point3<T>& p2)
 	{
 		return Point3<T>(std::max(p1.x, p2.x), std::max(p1.y, p2.y),
 			std::max(p1.z, p2.z));
 	}
 
-	template <typename T>
 	Point3<T> Floor(const Point3<T>& p)
 	{
 		return Point3<T>(std::floor(p.x), std::floor(p.y), std::floor(p.z));
 	}
 
-	template <typename T>
 	Point3<T> Ceil(const Point3<T>& p)
 	{
 		return Point3<T>(std::ceil(p.x), std::ceil(p.y), std::ceil(p.z));
 	}
 
-	template <typename T>
 	Point3<T> Abs(const Point3<T>& p)
 	{
 		return Point3<T>(std::abs(p.x), std::abs(p.y), std::abs(p.z));
 	}
 
-	template <typename T>
 	Point3<T> Permute(const Point3<T>& p, int x, int y, int z)
 	{
 		return Point3<T>(p[x], p[y], p[z]);

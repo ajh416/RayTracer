@@ -39,18 +39,12 @@ project "RayTracer"
 		"%{prj.name}/src/stb_image",
 	}
 
-	links 
-	{
-	}
-
 	defines
 	{
 	}
 
 	filter "configurations:Debug"
-		defines ""
 		symbols "On"
 
 	filter "configurations:Release"
-		defines ""
 		optimize "On"

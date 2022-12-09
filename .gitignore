@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# RayTracer specific ignores
+Makefile
+**.png
+bin-int/
+
 # User-specific files
 *.rsuser
 *.suo
