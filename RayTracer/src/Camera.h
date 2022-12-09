@@ -6,6 +6,8 @@
 class Camera
 {
 public:
+	Camera() = default;
+
 	Camera(int image_width, float aspect_ratio)
 		: m_Width(image_width), m_Height(static_cast<int>(image_width / aspect_ratio)), m_AspectRatio(aspect_ratio)
 	{

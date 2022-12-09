@@ -29,14 +29,14 @@ project "RayTracer"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/src/stb_image/**.cpp",
-		"%{prj.name}/src/stb_image/**.h",
+		"%{prj.name}/libs/stb_image/**.cpp",
+		"%{prj.name}/libs/stb_image/**.h",
 	}
 
 	includedirs
 	{
 		"%{prj.name}/src",
-		"%{prj.name}/src/stb_image",
+		"%{prj.name}/libs",
 	}
 
 	defines

@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-//#include "Timer.h"
+#include "Timer.h"
 
 #define FLOAT_AS_DOUBLE
 
@@ -28,7 +28,10 @@ static const Float PiOver2 = 1.57079632679489661923;
 static const Float PiOver4 = 0.78539816339744830961;
 static const Float Sqrt2 = 1.41421356237309504880;
 
+#ifndef _WIN32
 #define NDEBUG
+#endif
+
 #ifndef NDEBUG
 
 #define PROFILE_FUNCTION() Timer t##__LINE__(##__func__);
@@ -120,6 +123,8 @@ namespace Utils
 #else
 #define ASSERT(x, ...) if (!x) { ::Logger::Get().Error(__VA_ARGS__); }
 #endif
+
+#define ENABLE_LOG
 
 #ifdef ENABLE_LOG
 
