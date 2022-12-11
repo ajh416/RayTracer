@@ -86,11 +86,15 @@ namespace Utils
 		return std::log(x) * invLog2;
 	}
 
-	/* Does not compile with gcc
+#ifdef _WIN32
 	inline int Log2Int(uint32_t v) {
 		return 31 - __lzcnt(v);
 	}
-	*/
+#else
+	inline int Log2Int(uint32_t v) {
+		return 31 - __builtin_clzl(v);
+	}
+#endif
 
 	template <typename T>
 	inline bool IsPowerOf2(T v) {
@@ -105,11 +109,15 @@ namespace Utils
 		return v + 1;
 	}
 
-	/* Does not compile with gcc
+#ifdef _WIN32
 	inline int CountTrailingZeros(uint32_t v) {
 		return _tzcnt_u32(v);
 	}
-	*/
+#else
+	inline int CountTrailingZeros(uint32_t v) {
+		return __builtin_ctzl(v);
+	}
+#endif
 }
 
 //

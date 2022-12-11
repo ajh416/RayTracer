@@ -14,10 +14,7 @@ void Renderer::Render(Image& img, Camera& cam)
 		{
 			auto u = double(x) / (img.Width - 1); // transform the x coordinate to 0 -> 1 (rather than 0 -> image_width)
 			auto v = double(y) / (img.Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
-	
-			uint32_t color = PerPixel(Vector2<Float>(u, v));
-
-			img.Data[x + y * img.Width] = color;
+			img.Data[x + y * img.Width] = PerPixel({ u, v });
 		}
 	}
 }
@@ -26,7 +23,7 @@ uint32_t Renderer::PerPixel(Vector2<Float>&& coord)
 {
 	Ray<Float> r = Ray(m_Camera.GetOrigin(), m_Camera.GetLowerLeftCorner() + coord.x * m_Camera.GetHorizontal() + coord.y * m_Camera.GetVertical() - m_Camera.GetOrigin());
 
-	Vector3<Float> sphere_origin = Vector3<Float>(0, 0, 0);
+	constexpr Vector3<Float> sphere_origin = Vector3<Float>(0, 0, 0);
 	Float radius = 0.5;
 	Vector3<Float> oc = r.GetOrigin() - sphere_origin; // origin of ray - origin of sphere
 	auto a = Dot(r.GetDirection(), r.GetDirection()); // square the direction
@@ -35,23 +32,21 @@ uint32_t Renderer::PerPixel(Vector2<Float>&& coord)
 	auto discriminant = b * b - 4.0 * a * c; // quadratic formula
 	if (discriminant >= 0.0) // if we hit the sphere
 	{
-		double t[] = {
-			(-b - sqrt(discriminant)) / (2.0 * a),
-			//(-b + sqrt(discriminant)) / (2.0 * a)
-		};
+		double t0 = (-b - sqrt(discriminant)) / (2.0 * a); // CLOSEST T (SMALLEST)
+		double t1 = (-b + sqrt(discriminant)) / (2.0 * a); // second "hit' is the ray leaving the object, in our case a sphere
 
-		for (int i = 0; i < 1; i++) // don't really need second element for most things
-		{
-			Vector3<Float> hit_position = r.GetOrigin() + r.GetDirection() * t[i];
-			Vector3<Float> normal = hit_position - sphere_origin;
-			normal = Normalize(normal);
-			Vector3<Float> light_dir = Vector3<Float>(-1, 1, 1);
-			light_dir = Normalize(light_dir);
-			Float light_intensity = Utils::Max(Dot(normal, -light_dir), 0.0);
-			auto color = light_intensity * Vector3<Float>(1.0, 0.5, 0.4);
-			color = Utils::Clamp(color, Vector3(0.0), Vector3(1.0));
-			return Utils::VectorToUInt32(color);
-		}
+		Vector3<Float> h0 = r.GetOrigin() + r.GetDirection() * t0; // CLOSEST HITPOINT (SMALLEST)
+		Vector3<Float> h1 = r.GetOrigin() + r.GetDirection() * t1;
+		//if (h0 > h1) std::swap(h0, h1);
+
+		Vector3<Float> normal = h0 - sphere_origin;
+		normal = Normalize(normal);
+		Vector3<Float> light_dir = { -1, 1, 1 };
+		light_dir = Normalize(light_dir);
+		Float light_intensity = Utils::Max(Dot(normal, -light_dir), 0.0); // == cos(angle)
+		auto color = light_intensity * Vector3<Float>(1.0, 0.5, 0.4);
+		color = Utils::Clamp(color, Vector3(0.0), Vector3(1.0));
+		return Utils::VectorToUInt32(color);
 	}
 
 	// we only reach here if we didn't hit the sphere
