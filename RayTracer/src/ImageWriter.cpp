@@ -21,11 +21,12 @@ bool ImageWriter::Write(ImageType type, const int width, const int height, const
 	return true;
 }
 
-bool ImageWriter::Write(ImageType type, Image img, const std::string& filenameNoExt)
+bool ImageWriter::Write(ImageType type, Image& img, const std::string& filenameNoExt)
 {
 	PROFILE_FUNCTION();
 
 	stbi_flip_vertically_on_write(true);
+	
 	std::string ext = "";
 	switch (type)
 	{
@@ -39,7 +40,6 @@ bool ImageWriter::Write(ImageType type, Image img, const std::string& filenameNo
 		memcpy(img.Data, cpyData, sizeof(cpyData));
 		free(cpyData);
 		return success;
-		break;
 	}
 	case ImageType::JPG:
 	{
@@ -48,7 +48,6 @@ bool ImageWriter::Write(ImageType type, Image img, const std::string& filenameNo
 		if (success)
 			img.Data = nullptr;
 		return success;
-		break;
 	}
 	}
 

@@ -31,7 +31,7 @@ static const Float Sqrt2 = 1.41421356237309504880;
 #ifndef NDEBUG
 
 #ifdef _WIN32
-#define PROFILE_FUNCTION() Timer t##__LINE__(##__func__);
+#define PROFILE_FUNCTION() Timer t##__LINE__(__func__);
 #define PROFILE_SCOPE(name) Timer t##__LINE__(#name);
 #else
 #define PROFILE_FUNCTION() Timer t##__LINE__(__func__);
@@ -45,9 +45,9 @@ static const Float Sqrt2 = 1.41421356237309504880;
 
 #endif
 
+// Utility Functions
 namespace Utils
 {
-	// Utility Functions
 	template <typename T, typename U, typename V>
 	inline T Clamp(T val, U low, V high) {
 		if (val < low) return low;
