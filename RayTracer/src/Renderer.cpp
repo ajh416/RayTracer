@@ -35,8 +35,8 @@ uint32_t Renderer::PerPixel(Vector2<Float>&& coord)
 		double t0 = (-b - sqrt(discriminant)) / (2.0 * a); // CLOSEST T (SMALLEST)
 		double t1 = (-b + sqrt(discriminant)) / (2.0 * a); // second "hit' is the ray leaving the object, in our case a sphere
 
-		Vector3<Float> h0 = r.GetOrigin() + r.GetDirection() * t0; // CLOSEST HITPOINT (SMALLEST)
-		Vector3<Float> h1 = r.GetOrigin() + r.GetDirection() * t1;
+		Vector3<Float> h0 = r.At(t0); // CLOSEST HITPOINT (SMALLEST)
+		Vector3<Float> h1 = r.At(t1);
 		//if (h0 > h1) std::swap(h0, h1);
 
 		Vector3<Float> normal = h0 - sphere_origin;

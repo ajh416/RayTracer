@@ -95,6 +95,12 @@ public:
 		return Vector3(x + v.x, y + v.y, z + v.z);
 	}
 
+	//template<typename U>
+	//constexpr Vector3<T> operator+(const U& t)
+	//{
+	//	return Vector3(x + t, y + t, z + t);
+	//}
+
 	constexpr Vector3<T> operator+=(const Vector3<T>& v)
 	{
 		return Vector3(x += v.x, y += v.y, z += v.z);
@@ -156,6 +162,11 @@ public:
 template<typename T, typename U>
 constexpr inline Vector3<T> operator*(U t, const Vector3<T> v) {
 	return v * t;
+}
+
+template<typename T, typename U>
+constexpr inline Vector3<T> operator+(const Vector3<T> v1, const Vector3<U> v2) {
+	return Vector3<T>(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
 }
 
 template <typename T>
