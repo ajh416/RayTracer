@@ -12,7 +12,7 @@ workspace "RayTracer"
 		"MultiProcessorCompile"
 	}
 
-outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+outputdir = "%{cfg.buildcfg}"
 
 project "RayTracer"
 	location "RayTracer"
