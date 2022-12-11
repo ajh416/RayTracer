@@ -30,8 +30,13 @@ static const Float Sqrt2 = 1.41421356237309504880;
 
 #ifndef NDEBUG
 
+#ifdef _WIN32
 #define PROFILE_FUNCTION() Timer t##__LINE__(##__func__);
 #define PROFILE_SCOPE(name) Timer t##__LINE__(#name);
+#else
+#define PROFILE_FUNCTION() Timer t##__LINE__(__func__);
+#define PROFILE_SCOPE(name) Timer t##__LINE__(#name);
+#endif
 
 #else
 
