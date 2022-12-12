@@ -1,6 +1,6 @@
 #include "ImageWriter.h"
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION // Needed to allow usage of write functions
 #include "stb_image/stb_image_write.h"
 
 bool ImageWriter::Write(ImageType type, const int width, const int height, const std::string& filenameNoExt, const uint8_t* data)

@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "Ray.h"
 #include "Vector.h"
+#include "Shape.h"
 
 // TODO: CREATE MORE OBJECTS IN THE SCENE
 // TODO: BOUNDING BOXES?

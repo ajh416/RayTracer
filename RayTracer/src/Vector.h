@@ -195,7 +195,7 @@ template <typename T>
 constexpr inline Vector3<T> Normalize(const Vector3<T>&& v) { return v / v.Length(); }
 
 template<typename T>
-inline Vector3<T> Unit(const Vector3<T>& v) { Normalize(v); }
+constexpr inline Vector3<T> Unit(const Vector3<T>& v) { Normalize(v); }
 
 // Vector2 ostream operator
 template<typename T>
