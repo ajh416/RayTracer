@@ -4,7 +4,8 @@
 #include "Renderer.h"
 #include "Ray.h"
 #include "Vector.h"
-#include "Shape.h"
+#include "Scene.h"
+#include "Sphere.h"
 
 // TODO: CREATE MORE OBJECTS IN THE SCENE
 // TODO: BOUNDING BOXES?
@@ -21,8 +22,11 @@ int main()
 
 	Image img(image_width, image_height, 4);
 	Camera cam(image_width, aspect_ratio);
+	Scene scene;
 
-	Renderer::Render(img, cam);
+	scene.shapes.push_back(new Sphere(Vector3(0.0), 0.5));
+
+	Renderer::Render(scene, img, cam);
 
 	ASSERT(ImageWriter::Write(ImageType::PNG, img), "Image write failed!");
 }

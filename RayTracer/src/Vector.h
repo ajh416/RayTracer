@@ -154,7 +154,7 @@ public:
 	constexpr Vector3<T> operator-() const { return Vector3<T>(-x, -y, -z); }
 
 	constexpr Float LengthSquared() const { return x * x + y * y + z * z; }
-	constexpr Float Length() const { return std::sqrt(LengthSquared()); }
+	Float Length() const { return std::sqrt(LengthSquared()); }
 
 	T x, y, z;
 };
@@ -192,10 +192,10 @@ template <typename T>
 constexpr inline Vector3<T> Normalize(const Vector3<T>& v) { return v / v.Length(); }
 
 template <typename T>
-constexpr inline Vector3<T> Normalize(const Vector3<T>&& v) { return v / v.Length(); }
+inline Vector3<T> Normalize(const Vector3<T>&& v) { return v / v.Length(); }
 
 template<typename T>
-constexpr inline Vector3<T> Unit(const Vector3<T>& v) { Normalize(v); }
+inline Vector3<T> Unit(const Vector3<T>& v) { Normalize(v); }
 
 // Vector2 ostream operator
 template<typename T>

@@ -56,7 +56,7 @@ namespace Utils
 	}
 
 	template<typename T>
-	inline T Max(T one, T two)
+	constexpr inline T Max(T one, T two)
 	{
 		if (one > two)
 			return one;
