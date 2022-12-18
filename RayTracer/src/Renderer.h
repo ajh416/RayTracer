@@ -14,18 +14,25 @@ struct RenderSettings
 
 class Renderer
 {
-	Renderer() {};
 public:
-	static void Render(const Scene& scene, Image& img, const Camera& cam);
+	Renderer() = default;
 
-	static void SetSettings(const RenderSettings settings) { m_Settings = settings; }
+	void Render(const Scene& scene, const Camera& cam);
+
+	void SetSettings(const RenderSettings settings) { m_Settings = settings; }
+
+	void SetImage(Image* image) { m_Image = image; }
 
 private:
-	static Vector3<Float> TraceRay(const Scene& scene, Vector2<Float>&& coord);
+	Vector3<Float> PerPixel(Vector2<Float>&& coord);
 
-	static uint32_t PerPixel(Vector2<Float>&& coord);
+	Vector3<Float> TraceRay(const Ray<Float>& ray);
 
-	static Camera m_Camera;
 
-	static RenderSettings m_Settings;
+
+	Image* m_Image = nullptr;
+	const Camera* m_Camera = nullptr;
+	const Scene* m_Scene = nullptr;
+
+	RenderSettings m_Settings;
 };

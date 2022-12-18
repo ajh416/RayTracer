@@ -9,6 +9,7 @@ public:
 	Vector2() { x = y = 0; }
 	Vector2(T xx, T yy) : x(xx), y(yy) { ASSERT(!HasNaNs()); }
 	Vector2(T&& xx, T&& yy) : x(xx), y(yy) { ASSERT(!HasNaNs()); }
+	Vector2(std::initializer_list<T> list) { auto it = list.begin(); x = *it; ++it; y = *it; ASSERT(!HasNaNs()); }
 
 	bool HasNaNs() const
 	{

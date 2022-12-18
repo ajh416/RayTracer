@@ -31,10 +31,9 @@ public:
 			auto color = light_intensity * Vector3<Float>(1.0, 0.5, 0.4);
 			color = Utils::Clamp(color, Vector3(0.0), Vector3(1.0));
 
-			record.position = this->m_Position;
-			record.t = t0;
-			record.normal = normal;
-			record.albedo = color;
+			record.WorldPosition = this->m_Position;
+			record.WorldNormal = normal;
+			record.HitDistance = t0;
 
 			return true;
 		}

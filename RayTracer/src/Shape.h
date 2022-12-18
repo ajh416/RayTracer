@@ -6,10 +6,11 @@
 
 struct HitRecord
 {
-	Vector3<Float> position;
-	Vector3<Float> normal;
-	Vector3<Float> albedo;
-	double t;
+	Vector3<Float> WorldPosition;
+	Vector3<Float> WorldNormal;
+	Float HitDistance;
+
+	uint32_t ObjectIndex;
 };
 
 // TODO: CREATE INTERFACE FOR DETECTING IF THIS SHAPE WAS HIT
