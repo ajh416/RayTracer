@@ -101,9 +101,9 @@ public:
 	//	return Vector3(x + t, y + t, z + t);
 	//}
 
-	constexpr Vector3<T> operator+=(const Vector3<T>& v)
+	constexpr void operator+=(Vector3<T> v)
 	{
-		return Vector3(x += v.x, y += v.y, z += v.z);
+		*this = *this + v;
 	}
 
 	constexpr Vector3<T> operator-(const Vector3<T>& v)

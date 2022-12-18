@@ -17,25 +17,31 @@ public:
 		auto discriminant = b * b - 4.0 * a * c; // quadratic formula
 		if (discriminant >= 0.0) // if we hit the sphere
 		{
-			double t0 = (-b - sqrt(discriminant)) / (2.0 * a); // CLOSEST T (SMALLEST)
-			double t1 = (-b + sqrt(discriminant)) / (2.0 * a); // second "hit' is the ray leaving the object, in our case a sphere
+			auto sqrtd = sqrt(discriminant);
+			double t0 = (-b - sqrtd) / (2.0 * a); // CLOSEST T (SMALLEST)
+			double t1 = (-b + sqrtd) / (2.0 * a); // second "hit' is the ray leaving the object, in our case a sphere
 
 			Vector3<Float> h0 = r.At(t0); // CLOSEST HITPOINT (SMALLEST)
 			Vector3<Float> h1 = r.At(t1);
 			//if (h0 > h1) std::swap(h0, h1);
 
 			const Vector3<Float> normal = Normalize(h0 - m_Position);
-			Vector3<Float> light_dir = Normalize(Vector3<Float>(-1, 1, 1));
+			Vector3<Float> light_dir = Normalize(Vector3<Float>(0, -1, 0));
 			Float light_intensity = Utils::Max(Dot(normal, -light_dir), 0.0); // == cos(angle)
 			auto color = light_intensity * Vector3<Float>(1.0, 0.5, 0.4);
 			color = Utils::Clamp(color, Vector3(0.0), Vector3(1.0));
+
+			record.position = this->m_Position;
+			record.t = t0;
+			record.normal = normal;
+			record.albedo = color;
 
 			return true;
 		}
 
 		// we only reach here if we didn't hit the sphere
-		Vector3 unit_direction = Normalize(r.GetDirection()); // the unit vector (magnitude == 1) of the rays direction
-		auto t = 0.5 * (unit_direction.y + 1.0); // make t 0 -> 1
+		//Vector3 unit_direction = Normalize(r.GetDirection()); // the unit vector (magnitude == 1) of the rays direction
+		//auto t = 0.5 * (unit_direction.y + 1.0); // make t 0 -> 1
 		//return Utils::VectorToUInt32(Utils::Lerp(Vector3<Float>(1.0), Vector3<Float>(0.5, 0.7, 1.0), t)); // lerp the values to white -> light blue based on y coord
 		return false;
 	}

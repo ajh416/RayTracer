@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <random>
 
 #include "Timer.h"
 
@@ -48,6 +49,11 @@ static constexpr Float Sqrt2 = 1.41421356237309504880;
 // Utility Functions
 namespace Utils
 {
+	inline Float RandomFloat()
+	{
+		return (Float)std::random_device{}() / ((unsigned long long)std::numeric_limits<unsigned>::max() + 1);
+	}
+
 	template <typename T, typename U, typename V>
 	inline T Clamp(T val, U low, V high) {
 		if (val < low) return low;

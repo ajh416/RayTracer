@@ -7,7 +7,9 @@
 struct HitRecord
 {
 	Vector3<Float> position;
+	Vector3<Float> normal;
 	Vector3<Float> albedo;
+	double t;
 };
 
 // TODO: CREATE INTERFACE FOR DETECTING IF THIS SHAPE WAS HIT
