@@ -24,11 +24,13 @@ public:
 	void SetImage(Image* image) { m_Image = image; }
 
 private:
-	Vector3<Float> PerPixel(Vector2<Float>&& coord);
+	Vec3f PerPixel(Vec2f&& coord); // RayGen shader
 
-	Vector3<Float> TraceRay(const Ray<Float>& ray);
+	HitPayload TraceRay(const Ray<Float>& ray);
 
+	HitPayload ClosestHit(const Ray<Float>& ray, Float hitDistance, int objectIndex);
 
+	HitPayload Miss(const Ray<Float>& ray);
 
 	Image* m_Image = nullptr;
 	const Camera* m_Camera = nullptr;

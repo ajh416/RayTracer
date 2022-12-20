@@ -4,18 +4,23 @@
 #include "Vector.h"
 #include "Ray.h"
 
-struct HitRecord
+struct HitPayload
 {
-	Vector3<Float> WorldPosition;
-	Vector3<Float> WorldNormal;
+	Vec3f WorldPosition;
+	Vec3f WorldNormal;
 	Float HitDistance;
 
-	uint32_t ObjectIndex;
+	int ObjectIndex;
 };
 
 // TODO: CREATE INTERFACE FOR DETECTING IF THIS SHAPE WAS HIT
 class Shape
 {
 public:
-	virtual bool Hit(const Ray<Float>& r, HitRecord& record) const = 0;
+	Shape(const Vec3f& origin, const Vec3f& albedo) : Origin(origin), Albedo(albedo) {}
+
+	virtual bool Hit(const Ray<Float>& r, Float& hitDistance) const = 0;
+
+	Vec3f Origin;
+	Vec3f Albedo;
 };

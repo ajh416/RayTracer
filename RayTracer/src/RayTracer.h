@@ -20,6 +20,22 @@ using Float = double;
 using Float = float;
 #endif
 
+template<typename T>
+class Vector2;
+
+template<typename T>
+class Vector3;
+
+using Vector2f = Vector2<Float>;
+using Vec2f = Vector2f;
+using Vector2i = Vector2<int>;
+using Vec2i = Vector2i;
+
+using Vector3f = Vector3<Float>;
+using Vec3f = Vector3<Float>;
+using Vector3i = Vector3<int>;
+using Vec3i = Vector3i;
+
 // Useful Constants
 static constexpr Float Pi = 3.14159265358979323846;
 static constexpr Float InvPi = 0.31830988618379067154;

@@ -27,8 +27,8 @@ int main()
 	Camera cam(image_width, aspect_ratio);
 	Scene scene;
 
-	scene.shapes.push_back(new Sphere({ 0.0 }, 0.5));
-	scene.shapes.push_back(new Sphere({ 1, -2, 3 }, 1.0));
+	scene.shapes.push_back(new Sphere({ 0.0, 0.0, -1.0 }, 0.5, { 0.8, 0.5, 0.9 }));
+	scene.shapes.push_back(new Sphere({ 1, -2, -3 }, 1.0, { 0.8, 0.8, 0.4 }));
 
 	renderer.SetImage(&img);
 	renderer.Render(scene, cam);
