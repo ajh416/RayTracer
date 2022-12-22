@@ -13,6 +13,7 @@ public:
 	{
 		m_ViewportWidth = m_AspectRatio * m_ViewportHeight;
 
+		// make this negative to look at the positive Z rather than negative Z
 		Vec3f focal_length = { 0.0, 0.0, 1.0 };
 
 		m_Origin = Vec3f(0, 0, 0);

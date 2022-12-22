@@ -29,8 +29,8 @@ int main()
 
 	// For shapes, Z must be negative to be "seen" by the camera
 	// From RaytracingInAWeekend, we use a right-handed coordinate system
-	scene.shapes.push_back(new Sphere({ 0.0, 0.0, -1.0 }, 0.5, { 0.8, 0.5, 0.9 }));
-	//scene.shapes.push_back(new Sphere({ 0.0, 0.1, -1.0 }, 0.5, { 0.8, 0.8, 0.4 }));
+	scene.shapes.push_back(new Sphere({ -0.5, 1.0, -1.0 }, 0.5, { 0.8, 0.5, 0.9 }));
+	scene.shapes.push_back(new Sphere({ 0.0, 0.0, -1.0 }, 0.4, { 0.8, 0.8, 0.4 }));
 
 	renderer.SetImage(img);
 	renderer.Render(scene, cam);

@@ -37,15 +37,15 @@ Vec3f Renderer::PerPixel(Vec2f&& coord)
 			return Utils::Lerp(Vec3f(1.0), Vec3f(0.5, 0.7, 1.0), t);
 		}
 
-		const Shape* shape = m_Scene->shapes[payload.ObjectIndex];
+		const auto shape = m_Scene->shapes[payload.ObjectIndex];
 
 		Vec3f light_dir = Normalize(Vec3f(0, 0, -1));
 		Float light_intensity = Utils::Max(Dot(payload.WorldNormal, -light_dir), 0.0); // == cos(angle)
 
-		auto light_payload = TraceRay({ { 0.0 }, { r.At(payload.HitDistance) }});
-		if (light_payload.HitDistance == std::numeric_limits<Float>::min())
+		auto light_payload = TraceRay({ { r.At(payload.HitDistance )}, { payload.WorldNormal }});
+		if (light_payload.HitDistance >= 0)
 		{
-			LOG_INFO("Light cannot reach object!");
+			LOG_INFO("Light hit something!");
 		}
 
 		auto color = light_intensity * shape->Albedo;
