@@ -19,7 +19,7 @@ class Shape
 public:
 	Shape(const Vec3f& origin, const Vec3f& albedo) : Origin(origin), Albedo(albedo) {}
 
-	virtual bool Hit(const Ray<Float>& r, Float& hitDistance) const = 0;
+	virtual bool Hit(const Ray<Float>& r, Float tMin, Float tMax, Float& hitDistance) const = 0;
 
 	Vec3f Origin;
 	Vec3f Albedo;

@@ -8,7 +8,7 @@ class Sphere : public Shape
 public:
 	Sphere(Vec3f position = { 0 }, Float radius = 0.5, Vec3f albedo = { 0 }) : Shape(position, albedo), Position(position), Radius(radius) {}
 
-	virtual bool Hit(const Ray<Float>& r, Float& hitDistance) const override
+	virtual bool Hit(const Ray<Float>& r, Float tMin, Float tMax, Float& hitDistance) const override
 	{
 		Vec3f oc = r.GetOrigin() - Position; // origin of ray - origin of sphere
 		auto a = Dot(r.GetDirection(), r.GetDirection()); // square the direction
@@ -21,8 +21,8 @@ public:
 			Float t0 = (-b - sqrtd) / (2.0 * a); // CLOSEST T (SMALLEST)
 			Float t1 = (-b + sqrtd) / (2.0 * a); // second "hit' is the ray leaving the object, in our case a sphere
 
-			Vec3f h0 = r.At(t0); // CLOSEST HITPOINT (SMALLEST)
-			Vec3f h1 = r.At(t1);
+			//Vec3f h0 = r.At(t0); // CLOSEST HITPOINT (SMALLEST)
+			//Vec3f h1 = r.At(t1);
 			//if (h0 > h1) std::swap(h0, h1);
 
 			hitDistance = t0;

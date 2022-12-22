@@ -17,5 +17,5 @@ public:
 	constexpr Vector3<T> At(const Float t) const { return m_Origin + (t * m_Direction); }
 private:
 	const Vector3<T> m_Origin;
-	Vector3<T> m_Direction;
+	const Vector3<T> m_Direction;
 };

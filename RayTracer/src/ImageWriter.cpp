@@ -25,7 +25,7 @@ bool ImageWriter::Write(ImageType type, Image& img, const std::string& filenameN
 {
 	PROFILE_FUNCTION();
 
-	//stbi_flip_vertically_on_write(true);
+	stbi_flip_vertically_on_write(true);
 	
 	std::string ext = "";
 	switch (type)

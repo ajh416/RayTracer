@@ -21,16 +21,18 @@ int main()
 	constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
 
 	Renderer renderer;
-	renderer.SetSettings({ .NumberOfSamples = 5 });
+	renderer.SetSettings({ .NumberOfSamples = 25 });
 
 	Image img(image_width, image_height, 4);
 	Camera cam(image_width, aspect_ratio);
 	Scene scene;
 
+	// For shapes, Z must be negative to be "seen" by the camera
+	// From RaytracingInAWeekend, we use a right-handed coordinate system
 	scene.shapes.push_back(new Sphere({ 0.0, 0.0, -1.0 }, 0.5, { 0.8, 0.5, 0.9 }));
-	scene.shapes.push_back(new Sphere({ 1, -2, -3 }, 1.0, { 0.8, 0.8, 0.4 }));
+	//scene.shapes.push_back(new Sphere({ 0.0, 0.1, -1.0 }, 0.5, { 0.8, 0.8, 0.4 }));
 
-	renderer.SetImage(&img);
+	renderer.SetImage(img);
 	renderer.Render(scene, cam);
 
 	ASSERT(ImageWriter::Write(ImageType::PNG, img), "Image write failed!");

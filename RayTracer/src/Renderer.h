@@ -21,7 +21,7 @@ public:
 
 	void SetSettings(const RenderSettings settings) { m_Settings = settings; }
 
-	void SetImage(Image* image) { m_Image = image; }
+	void SetImage(Image& image) { m_Image = &image; }
 
 private:
 	Vec3f PerPixel(Vec2f&& coord); // RayGen shader
