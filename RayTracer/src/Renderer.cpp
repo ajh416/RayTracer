@@ -29,7 +29,7 @@ Vec3f Renderer::PerPixel(Vec2f&& coord)
 		const Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({ u, v }));
 		
 		auto payload = TraceRay(r);
-		if (payload.HitDistance == std::numeric_limits<Float>::min())
+		if (payload.HitDistance < 0)
 		{
 			Vector3 unit_direction = Normalize(r.GetDirection()); // the unit vector (magnitude == 1) of the rays direction
 			auto t = 0.5 * (unit_direction.y + 1.0); // make t 0 -> 1
@@ -101,6 +101,6 @@ HitPayload Renderer::ClosestHit(const Ray<Float>& ray, Float hitDistance, int ob
 HitPayload Renderer::Miss(const Ray<Float>& ray)
 {
 	HitPayload payload;
-	payload.HitDistance = std::numeric_limits<Float>::min();
+	payload.HitDistance = -1;
 	return payload;
 }
