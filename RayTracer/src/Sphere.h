@@ -10,9 +10,9 @@ public:
 
 	virtual bool Hit(const Ray<Float>& r, Float tMin, Float tMax, Float& hitDistance) const override
 	{
-		Vec3f oc = r.GetOrigin() - Position; // origin of ray - origin of sphere
-		auto a = Dot(r.GetDirection(), r.GetDirection()); // square the direction
-		auto b = 2.0 * Dot(oc, r.GetDirection());
+		Vec3f oc = r.Origin - Position; // origin of ray - origin of sphere
+		auto a = Dot(r.Direction, r.Direction); // square the direction
+		auto b = 2.0 * Dot(oc, r.Direction);
 		auto c = Dot(oc, oc) - Radius * Radius;
 		auto discriminant = b * b - 4.0 * a * c; // quadratic formula
 		if (discriminant >= 0.0) // if we hit the sphere

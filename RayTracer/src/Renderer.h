@@ -10,6 +10,7 @@
 struct RenderSettings
 {
 	int NumberOfSamples = 1;
+	int NumberOfBounces = 1;
 };
 
 class Renderer

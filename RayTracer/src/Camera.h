@@ -8,7 +8,7 @@ class Camera
 public:
 	Camera() = default;
 
-	Camera(int image_width, float aspect_ratio)
+	Camera(int image_width, float aspect_ratio, Vec3f origin = { 0, 0, 0})
 		: m_Width(image_width), m_Height(static_cast<int>(image_width / aspect_ratio)), m_AspectRatio(aspect_ratio)
 	{
 		m_ViewportWidth = m_AspectRatio * m_ViewportHeight;
@@ -16,7 +16,7 @@ public:
 		// make this negative to look at the positive Z rather than negative Z
 		Vec3f focal_length = { 0.0, 0.0, 1.0 };
 
-		m_Origin = Vec3f(0, 0, 0);
+		m_Origin = origin;
 		m_Horizontal = Vec3f(Float(m_ViewportWidth), 0.0, 0.0);
 		m_Vertical = Vec3f(0.0, Float(m_ViewportHeight), 0.0);
 		m_LowerLeftCorner = m_Origin - m_Horizontal / 2 - m_Vertical / 2 - focal_length;

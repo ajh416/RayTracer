@@ -109,28 +109,31 @@ public:
 
 	constexpr Vector3<T> operator-(const Vector3<T>& v)
 	{
-		return Vector3(x - v.x, y - v.y, z -v.z);
+		return Vector3(x - v.x, y - v.y, z - v.z);
 	}
 
-	constexpr Vector3<T> operator-=(const Vector3<T>& v)
+	constexpr void operator-=(const Vector3<T>& v)
 	{
-		return Vector3(x -= v.x, y -= v.y, z -= v.z);
+		*this = *this + v;
+		//return Vector3(x -= v.x, y -= v.y, z -= v.z);
 	}
 
-	bool operator==(const Vector3<T>& v)
+	constexpr bool operator==(const Vector3<T>& v)
 	{
 		return x == v.x && y == v.y && z == v.z;
 	}
 
-	bool operator!=(const Vector3<T>& v)
+	constexpr bool operator!=(const Vector3<T>& v)
 	{
 		return x != v.x || y != v.y || z != v.z;
 	}
 
-	bool operator>(const Vector3<T>& v)
+	constexpr bool operator>(const Vector3<T>& v)
 	{
 		return (x > v.x && y > v.y && z > v.y);
 	}
+
+	//operator uint32_t() { auto x = Utils::Vec3FloatToVec3Byte<T>(*this); return 0xff000000 | (x.z << 16) | (x.y << 8) | x.x; }
 
 	constexpr Vector3<T> operator*(T f) const { return Vector3<T>(f * x, f * y, f * z); }
 
@@ -170,6 +173,11 @@ constexpr inline Vector3<T> operator+(const Vector3<T> v1, const Vector3<U> v2) 
 	return Vector3<T>(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
 }
 
+template<typename T, typename U>
+constexpr inline Vector3<T> operator-(const Vector3<T> v1, const Vector3<U> v2) {
+	return Vector3<T>(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+}
+
 template <typename T>
 constexpr inline T Dot(const Vector3<T>& v1, const Vector3<T>& v2) {
 	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
@@ -197,6 +205,13 @@ inline Vector3<T> Normalize(const Vector3<T>&& v) { return v / v.Length(); }
 
 template<typename T>
 inline Vector3<T> Unit(const Vector3<T>& v) { Normalize(v); }
+
+// I - 2.0 * dot(N, I) * N
+template<typename T>
+inline Vector3<T> Reflect(const Vector3<T>& I, const Vector3<T>& N)
+{
+	return I - 2.0 * Dot(N, I) * N;
+}
 
 // Vector2 ostream operator
 template<typename T>
@@ -231,8 +246,15 @@ namespace Utils
 		return vec;
 	}
 
-	// assumes that vec is Float (float/double)
-	constexpr inline Vector3<uint8_t> Vec3FloatToVec3Byte(Vector3<Float> vec)
+	template<typename T>
+	inline Vector3<T> RandomVector(Float low, Float high)
+	{
+		return Vector3<T>(Utils::Random<Float>(low, high), Utils::Random<Float>(low, high), Utils::Random<Float>(low, high));
+	}
+
+	// assumes that vec is Float
+	template<typename T>
+	constexpr inline Vector3<uint8_t> Vec3FloatToVec3Byte(const Vector3<T>& vec)
 	{
 		Vector3<uint8_t> newVec;
 		newVec.x = static_cast<uint8_t>(255.0 * vec.x);

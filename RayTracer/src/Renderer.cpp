@@ -24,34 +24,46 @@ Vec3f Renderer::PerPixel(Vec2f&& coord)
 	Vec3f res = 0.0;
 	for (int i = 0; i < m_Settings.NumberOfSamples; i++)
 	{
-		auto u = double(coord.x + Utils::RandomFloat()) / (m_Image->Width - 1); // transform the x coordinate to 0 -> 1 (rather than 0 -> image_width)
-		auto v = double(coord.y + Utils::RandomFloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
-		const Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({ u, v }));
+		//auto u = double(coord.x + Utils::RandomFloat()) / (m_Image->Width - 1); // transform the x coordinate to 0 -> 1 (rather than 0 -> image_width)
+		//auto v = double(coord.y + Utils::RandomFloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
+		auto u = Float(coord.x) / (m_Image->Width - 1);
+		auto v = Float(coord.y) / (m_Image->Height - 1);
+		Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({ u, v }));
 		
-		auto payload = TraceRay(r);
-		if (payload.HitDistance < 0)
+		auto multiplier = 1.0;
+
+		for (int i = 0; i < m_Settings.NumberOfBounces; i++)
 		{
-			Vector3 unit_direction = Normalize(r.GetDirection()); // the unit vector (magnitude == 1) of the rays direction
-			auto t = 0.5 * (unit_direction.y + 1.0); // make t 0 -> 1
-			// This is opposite RaytracingInAWeekend, we instead flip the values to lerp to/from because of reversed y UV system
-			return Utils::Lerp(Vec3f(1.0), Vec3f(0.5, 0.7, 1.0), t);
+			auto payload = TraceRay(r);
+			if (payload.HitDistance < 0)
+			{
+				Vector3 unit_direction = Normalize(r.Direction); // the unit vector (magnitude == 1) of the rays direction
+				auto t = 0.5 * (unit_direction.y + 1.0); // make t 0 -> 1
+
+				// if this is our first "bounce" and didn't hit anything, set to background color
+				if (i == 0)
+					// This is (NOW NOT) opposite RaytracingInAWeekend, we instead flip the values to lerp to/from because of reversed y UV system
+					res += Utils::Lerp(Vec3f(1.0), Vec3f(0.5, 0.7, 1.0), t);
+				else // else, set black to not affect the reflection
+					res += Vec3f(0.0);
+				continue;
+			}
+
+			const auto shape = m_Scene->shapes[payload.ObjectIndex];
+
+			Vec3f light_dir = Normalize(Vec3f(0, -0.5, -1));
+			Float light_intensity = Utils::Max(Dot(payload.WorldNormal, -light_dir), 0.0); // == cos(angle)
+
+			auto shape_color = shape->Albedo;
+			shape_color *= light_intensity;
+
+			res += Utils::Clamp(shape_color * multiplier, Vec3f(0.0), Vec3f(1.0));
+
+			multiplier *= 0.7;
+
+			r.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001;
+			r.Direction = Reflect(r.Direction, payload.WorldNormal);
 		}
-
-		const auto shape = m_Scene->shapes[payload.ObjectIndex];
-
-		Vec3f light_dir = Normalize(Vec3f(0, 0, -1));
-		Float light_intensity = Utils::Max(Dot(payload.WorldNormal, -light_dir), 0.0); // == cos(angle)
-
-		auto light_payload = TraceRay({ { r.At(payload.HitDistance )}, { payload.WorldNormal }});
-		if (light_payload.HitDistance >= 0)
-		{
-			LOG_INFO("Light hit something!");
-		}
-
-		auto color = light_intensity * shape->Albedo;
-		color = Utils::Clamp(color, Vec3f(0.0), Vec3f(1.0));
-
-		res += color;
 	}
 
 	return res / m_Settings.NumberOfSamples;
@@ -68,7 +80,7 @@ HitPayload Renderer::TraceRay(const Ray<Float>& ray)
 		Float newDistance = 0;
 		if (shape->Hit(ray, 0, hitDistance, newDistance))
 		{
-			if (newDistance < hitDistance)
+			if (newDistance > 0.0 && newDistance < hitDistance)
 			{
 				hitDistance = newDistance;
 				objectIndex = i;
@@ -90,8 +102,8 @@ HitPayload Renderer::ClosestHit(const Ray<Float>& ray, Float hitDistance, int ob
 
 	const Shape* closestShape = m_Scene->shapes[objectIndex];
 
-	Vec3f origin = ray.GetOrigin() - closestShape->Origin;
-	payload.WorldPosition = origin + hitDistance * ray.GetDirection();
+	Vec3f origin = ray.Origin - closestShape->Origin;
+	payload.WorldPosition = origin + hitDistance * ray.Direction;
 	payload.WorldNormal = Normalize(payload.WorldPosition);
 	payload.WorldPosition += closestShape->Origin;
 

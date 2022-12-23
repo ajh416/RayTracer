@@ -70,6 +70,12 @@ namespace Utils
 		return (Float)std::random_device{}() / ((unsigned long long)std::numeric_limits<unsigned>::max() + 1);
 	}
 
+	template<typename T>
+	inline T Random(T low, T high)
+	{
+		return (T)std::random_device{}() / (std::numeric_limits<T>::max() + 1);
+	}
+
 	template <typename T, typename U, typename V>
 	inline T Clamp(T val, U low, V high) {
 		if (val < low) return low;
