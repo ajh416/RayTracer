@@ -65,15 +65,16 @@ static constexpr Float Sqrt2 = 1.41421356237309504880;
 // Utility Functions
 namespace Utils
 {
+	// returns a Float within [0, 1)
 	inline Float RandomFloat()
 	{
 		return (Float)std::random_device{}() / ((unsigned long long)std::numeric_limits<unsigned>::max() + 1);
 	}
 
-	template<typename T>
-	inline T Random(T low, T high)
+	// returns a Float within [low, high)
+	inline Float Random(Float low, Float high)
 	{
-		return (T)std::random_device{}() / (std::numeric_limits<T>::max() + 1);
+		return low + ((Float)std::random_device{}() / std::numeric_limits<unsigned>::max() + 1) * (high - low);
 	}
 
 	template <typename T, typename U, typename V>

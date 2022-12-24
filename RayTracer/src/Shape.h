@@ -13,6 +13,11 @@ struct HitPayload
 	int ObjectIndex;
 };
 
+struct Material
+{
+
+};
+
 // TODO: CREATE INTERFACE FOR DETECTING IF THIS SHAPE WAS HIT
 class Shape
 {

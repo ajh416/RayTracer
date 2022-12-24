@@ -249,7 +249,7 @@ namespace Utils
 	template<typename T>
 	inline Vector3<T> RandomVector(Float low, Float high)
 	{
-		return Vector3<T>(Utils::Random<Float>(low, high), Utils::Random<Float>(low, high), Utils::Random<Float>(low, high));
+		return Vector3<T>(Utils::Random(low, high), Utils::Random(low, high), Utils::Random(low, high));
 	}
 
 	// assumes that vec is Float

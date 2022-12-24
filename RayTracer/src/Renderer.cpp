@@ -24,14 +24,13 @@ Vec3f Renderer::PerPixel(Vec2f&& coord)
 	Vec3f res = 0.0;
 	for (int i = 0; i < m_Settings.NumberOfSamples; i++)
 	{
-		//auto u = double(coord.x + Utils::RandomFloat()) / (m_Image->Width - 1); // transform the x coordinate to 0 -> 1 (rather than 0 -> image_width)
-		//auto v = double(coord.y + Utils::RandomFloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
-		auto u = Float(coord.x) / (m_Image->Width - 1);
-		auto v = Float(coord.y) / (m_Image->Height - 1);
+		auto u = double(coord.x + Utils::RandomFloat()) / (m_Image->Width - 1); // transform the x coordinate to 0 -> 1 (rather than 0 -> image_width)
+		auto v = double(coord.y + Utils::RandomFloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
+		//auto u = Float(coord.x) / (m_Image->Width - 1);
+		//auto v = Float(coord.y) / (m_Image->Height - 1);
 		Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({ u, v }));
 		
 		auto multiplier = 1.0;
-
 		for (int i = 0; i < m_Settings.NumberOfBounces; i++)
 		{
 			auto payload = TraceRay(r);
@@ -51,7 +50,7 @@ Vec3f Renderer::PerPixel(Vec2f&& coord)
 
 			const auto shape = m_Scene->shapes[payload.ObjectIndex];
 
-			Vec3f light_dir = Normalize(Vec3f(0, -0.5, -1));
+			Vec3f light_dir = Normalize(Vec3f(0, -1, -0.5));
 			Float light_intensity = Utils::Max(Dot(payload.WorldNormal, -light_dir), 0.0); // == cos(angle)
 
 			auto shape_color = shape->Albedo;
