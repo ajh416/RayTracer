@@ -33,10 +33,10 @@ bool ImageWriter::Write(ImageType type, Image& img, const std::string& filenameN
 	case ImageType::PNG:
 	{
 		ext = ".png";
-		uint32_t* cpyData = (uint32_t*)malloc(sizeof(img.Data));
+		uint32_t* cpyData = (uint32_t*)malloc(img.Size * sizeof(uint32_t));
 		memcpy(cpyData, img.Data, sizeof(img.Data));
 		bool success = stbi_write_png((filenameNoExt + ext).c_str(), img.Width, img.Height, img.Channels, img.Data, img.Width * 4);
-		img.Data = (uint32_t*)malloc(sizeof(cpyData));
+		img.Data = (uint32_t*)malloc(img.Size * sizeof(uint32_t));
 		memcpy(img.Data, cpyData, sizeof(cpyData));
 		free(cpyData);
 		return success;
