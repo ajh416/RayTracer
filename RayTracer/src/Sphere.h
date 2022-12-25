@@ -6,7 +6,7 @@
 class Sphere : public Shape
 {
 public:
-	Sphere(Vec3f position = { 0 }, Float radius = 0.5, Vec3f albedo = { 0 }) : Shape(position, albedo), Position(position), Radius(radius) {}
+	Sphere(Vec3f position = { 0 }, Float radius = 0.5, const Material& mat = { {1.0}, {1.0}, {0.0} }) : Shape(position, mat), Position(position), Radius(radius) {}
 
 	virtual bool Hit(const Ray<Float>& r, Float tMin, Float tMax, Float& hitDistance) const override
 	{

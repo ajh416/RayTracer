@@ -50,18 +50,18 @@ Vec3f Renderer::PerPixel(Vec2f&& coord)
 
 			const auto shape = m_Scene->shapes[payload.ObjectIndex];
 
-			Vec3f light_dir = Normalize(Vec3f(0, -1, -0.5));
+			Vec3f light_dir = Normalize(Vec3f(0, -0.4, -1));
 			Float light_intensity = Utils::Max(Dot(payload.WorldNormal, -light_dir), 0.0); // == cos(angle)
 
-			auto shape_color = shape->Albedo;
+			auto shape_color = shape->mat.Albedo;
 			shape_color *= light_intensity;
 
 			res += Utils::Clamp(shape_color * multiplier, Vec3f(0.0), Vec3f(1.0));
 
-			multiplier *= 0.7;
+			multiplier *= 0.5;
 
 			r.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001;
-			r.Direction = Reflect(r.Direction, payload.WorldNormal);
+			r.Direction = Reflect(r.Direction, payload.WorldNormal + shape->mat.Roughness * Utils::RandomVector(-0.5, 0.5));
 		}
 	}
 

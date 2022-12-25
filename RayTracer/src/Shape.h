@@ -15,17 +15,19 @@ struct HitPayload
 
 struct Material
 {
-
+	Vec3f Albedo = { 1.0 };
+	Float Roughness = 1.0;
+	Float Metallic = 0.0;
 };
 
 // TODO: CREATE INTERFACE FOR DETECTING IF THIS SHAPE WAS HIT
 class Shape
 {
 public:
-	Shape(const Vec3f& origin, const Vec3f& albedo) : Origin(origin), Albedo(albedo) {}
+	Shape(const Vec3f& origin, const Material& mat) : Origin(origin), mat(mat) {}
 
 	virtual bool Hit(const Ray<Float>& r, Float tMin, Float tMax, Float& hitDistance) const = 0;
 
 	Vec3f Origin;
-	Vec3f Albedo;
+	Material mat;
 };

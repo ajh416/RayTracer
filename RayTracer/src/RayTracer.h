@@ -65,16 +65,32 @@ static constexpr Float Sqrt2 = 1.41421356237309504880;
 // Utility Functions
 namespace Utils
 {
-	// returns a Float within [0, 1)
+	//// returns a Float within [0, 1)
+	//inline Float RandomFloat()
+	//{
+	//	return (Float)std::random_device{}() / ((unsigned long long)std::numeric_limits<unsigned>::max() + 1);
+	//}
+
+	// using this pseudorandom generator for speeds sake
 	inline Float RandomFloat()
 	{
-		return (Float)std::random_device{}() / ((unsigned long long)std::numeric_limits<unsigned>::max() + 1);
+		static std::default_random_engine eng;
+		static std::uniform_real_distribution<Float> dis(0, 1);
+		return dis(eng);
 	}
 
-	// returns a Float within [low, high)
+	//// returns a Float within [low, high)
+	//inline Float Random(Float low, Float high)
+	//{
+	//	return low + ((Float)std::random_device{}() / std::numeric_limits<unsigned>::max() + 1) * (high - low);
+	//}
+
+	// using this pseudorandom generator for speeds sake
 	inline Float Random(Float low, Float high)
 	{
-		return low + ((Float)std::random_device{}() / std::numeric_limits<unsigned>::max() + 1) * (high - low);
+		static std::default_random_engine eng(std::random_device{}());
+		static std::uniform_real_distribution<Float> dis(low, high);
+		return dis(eng);
 	}
 
 	template <typename T, typename U, typename V>
