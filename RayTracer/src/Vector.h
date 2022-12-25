@@ -174,6 +174,11 @@ constexpr inline Vector3<T> operator+(const Vector3<T> v1, const Vector3<U> v2) 
 }
 
 template<typename T, typename U>
+constexpr inline Vector3<T> operator+(const Vector3<T> v, const U other) {
+	return Vector3<T>(v.x + other, v.y + other, v.z + other);
+}
+
+template<typename T, typename U>
 constexpr inline Vector3<T> operator-(const Vector3<T> v1, const Vector3<U> v2) {
 	return Vector3<T>(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
 }
@@ -246,10 +251,9 @@ namespace Utils
 		return vec;
 	}
 
-	template<typename T>
-	inline Vector3<T> RandomVector(Float low, Float high)
+	inline Vec3f RandomVector(Float low, Float high)
 	{
-		return Vector3<T>(Utils::Random(low, high), Utils::Random(low, high), Utils::Random(low, high));
+		return Vec3f(Utils::Random(low, high), Utils::Random(low, high), Utils::Random(low, high));
 	}
 
 	// assumes that vec is Float
