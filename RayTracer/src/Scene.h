@@ -9,6 +9,6 @@
 
 struct Scene
 {
-	std::vector<Shape*> shapes;
-	std::vector<Light*> lights;
+	std::vector<Shape*> Shapes;
+	std::vector<Material> Materials;
 };

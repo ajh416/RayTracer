@@ -24,10 +24,10 @@ struct Material
 class Shape
 {
 public:
-	Shape(const Vec3f& origin, const Material& mat) : Origin(origin), mat(mat) {}
+	Shape(const Vec3f& origin, int material_index) : Origin(origin), MaterialIndex(material_index) {}
 
 	virtual bool Hit(const Ray<Float>& r, Float tMin, Float tMax, Float& hitDistance) const = 0;
 
 	Vec3f Origin;
-	Material mat;
+	int MaterialIndex = 0;
 };

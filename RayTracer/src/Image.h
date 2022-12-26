@@ -10,6 +10,6 @@ public:
 	~Image();
 
 	unsigned int Width, Height, Channels; // width, height, channels
-	uint64_t Size; // size
-	uint32_t* Data; // don't attempt to delete/free unless not written by stbi, will be freed by stbi
+	uint64_t Size; // size of the image in terms of pixels
+	uint32_t* Data; // this will be freed by stbi during write, although we circumvent with copy and free it ourselves
 };

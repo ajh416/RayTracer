@@ -12,26 +12,32 @@
 
 int main()
 {
-	PROFILE_FUNCTION()
+	PROFILE_FUNCTION();
 
 	Logger::Init();
 
-	constexpr int image_width = 200;
+	constexpr int image_width = 1280;
 	constexpr float aspect_ratio = 16.0f / 9.0f;
 	constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
-	
+
 	Renderer renderer;
-	renderer.SetSettings({ .NumberOfSamples = 25, .NumberOfBounces = 5 });
+
+	// Setting accumulate to true enables path tracing, which takes quite a while to complete
+	renderer.SetSettings({ .NumberOfSamples = 2, .NumberOfBounces = 3, .Accumulate = true, .AccumulateMax = 25 });
 
 	Image img(image_width, image_height, 4);
-	Camera cam(image_width, aspect_ratio, {0, 0.3, 0});
+	Camera cam(image_width, aspect_ratio, { 0, 0.1, 0 });
 	Scene scene;
 
 	// For shapes, Z must be negative to be "seen" by the camera
 	// From RaytracingInOneWeekend, we use a right-handed coordinate system
-	scene.shapes.push_back(new Sphere({ 0.0, 1.5, -1.0 }, 0.5, { { 0.8, 0.5, 0.9 }, 0.2, 0.0 }));
-	scene.shapes.push_back(new Sphere({ 0.0, 0.1, -1.0 }, 0.4, { { 0.8, 0.8, 0.4 }, 0.0, 0.0 }));
-	scene.shapes.push_back(new Sphere({ 0.0, -10.0, -1.0 }, 9.0, { { 0.3, 0.3, 0.8 }, 1.0, 0.0 }));
+	scene.Shapes.push_back(new Sphere({ 0.0, 1.5, -1.0 }, 0.5, 0));
+	scene.Shapes.push_back(new Sphere({ 0.0, 0.2, -1.0 }, 0.4, 0));
+	scene.Shapes.push_back(new Sphere({ 0.0, -100.0, -1.0 }, 99.5, 1));
+
+	// Vector of materials accessed using indices
+	scene.Materials.push_back(Material({ {0.3, 0.3, 0.8}, 0.0, 0.0 }));
+	scene.Materials.push_back(Material({ {0.6, 0.6, 0.6}, 0.1, 0.0 }));
 
 	renderer.SetImage(img);
 	renderer.Render(scene, cam);

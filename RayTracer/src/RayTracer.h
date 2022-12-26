@@ -74,7 +74,7 @@ namespace Utils
 	// using this pseudorandom generator for speeds sake
 	inline Float RandomFloat()
 	{
-		static std::default_random_engine eng;
+		static std::default_random_engine eng(std::random_device{}());
 		static std::uniform_real_distribution<Float> dis(0, 1);
 		return dis(eng);
 	}
