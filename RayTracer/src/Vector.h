@@ -102,9 +102,12 @@ public:
 	//	return Vector3(x + t, y + t, z + t);
 	//}
 
-	constexpr void operator+=(Vector3<T> v)
+	constexpr Vector3<T>& operator+=(const Vector3<T>& v)
 	{
-		*this = *this + v;
+		x += v.x;
+		y += v.y;
+		z += v.z;
+		return *this;
 	}
 
 	constexpr Vector3<T> operator-(const Vector3<T>& v)
@@ -112,9 +115,12 @@ public:
 		return Vector3(x - v.x, y - v.y, z - v.z);
 	}
 
-	constexpr void operator-=(const Vector3<T>& v)
+	constexpr Vector3<T>& operator-=(const Vector3<T>& v)
 	{
-		*this = *this + v;
+		x -= v.x;
+		y -= v.y;
+		z -= v.z;
+		return *this;
 		//return Vector3(x -= v.x, y -= v.y, z -= v.z);
 	}
 

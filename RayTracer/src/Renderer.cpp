@@ -3,6 +3,9 @@
 #include "Ray.h"
 #include "Vector.h"
 
+#include <future>
+#include <execution>
+
 void Renderer::Render(const Scene& scene, const Camera& cam)
 {
 	m_Camera = &cam;
@@ -11,7 +14,28 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 	if (!m_Settings.Accumulate)
 		m_Settings.AccumulateMax = 1;
 
-	for (int y = m_Image->Height - 1; y >= 0; y--)
+#define MT 1
+#if MT
+
+	std::for_each(std::execution::par, m_ImageVerticalIter.begin(), m_ImageVerticalIter.end(), [this](uint32_t y)
+		{
+			std::for_each(std::execution::par, m_ImageHorizontalIter.begin(), m_ImageHorizontalIter.end(), [this, y](uint32_t x)
+				{
+					for (int i = 0; i < m_Settings.AccumulateMax; i++)
+					{
+						auto color = PerPixel({ (Float)x, (Float)y });
+						m_AccumulationData[x + y * m_Image->Width] += color;
+					}
+					auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
+					accumulated_color /= (Float)m_Settings.AccumulateMax;
+
+					m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
+				});
+		});
+
+#else
+
+	for (int y = 0; y < (int)m_Image->Height; y++)
 	{
 		for (int x = 0; x < (int)m_Image->Width; x++)
 		{
@@ -19,16 +43,34 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 			{
 				auto color = PerPixel({ (Float)x, (Float)y });
 				m_AccumulationData[x + y * m_Image->Width] += color;
-			}
+					}
 			auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
 			accumulated_color /= (Float)m_Settings.AccumulateMax;
 
 			m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
-		}
 	}
+	}
+
+#endif
 }
 
-Vec3f Renderer::PerPixel(Vec2f&& coord)
+void Renderer::SetImage(Image& image)
+{
+	m_Image = &image;
+	delete[] m_AccumulationData;
+	m_AccumulationData = new Vec3f[m_Image->Width * m_Image->Height];
+
+	m_ImageVerticalIter.resize(m_Image->Height);
+	m_ImageHorizontalIter.resize(m_Image->Width);
+
+	for (uint32_t x = 0; x < m_Image->Height; x++)
+		m_ImageVerticalIter[x] = x;
+
+	for (uint32_t y = 0; y < m_Image->Width; y++)
+		m_ImageHorizontalIter[y] = y;
+}
+
+Vec3f Renderer::PerPixel(const Vec2f&& coord)
 {
 	Vec3f res = 0.0;
 	for (int i = 0; i < m_Settings.NumberOfSamples; i++)
@@ -83,6 +125,7 @@ HitPayload Renderer::TraceRay(const Ray<Float>& ray)
 	{
 		const Shape* shape = m_Scene->Shapes[i];
 		Float newDistance = 0;
+
 		if (shape->Hit(ray, 0, hitDistance, newDistance))
 		{
 			if (newDistance > 0.0 && newDistance < hitDistance)
@@ -117,7 +160,6 @@ HitPayload Renderer::ClosestHit(const Ray<Float>& ray, Float hitDistance, int ob
 
 constexpr HitPayload Renderer::Miss(const Ray<Float>& ray)
 {
-	HitPayload payload;
-	payload.HitDistance = -1;
+	constexpr HitPayload payload = { .HitDistance = -1 };
 	return payload;
 }

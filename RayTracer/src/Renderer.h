@@ -9,10 +9,10 @@
 
 struct RenderSettings
 {
-	int NumberOfSamples = 1;
-	int NumberOfBounces = 1;
+	uint32_t NumberOfSamples = 1;
+	uint32_t NumberOfBounces = 1;
 	bool Accumulate = true;
-	int AccumulateMax = 1;
+	uint32_t AccumulateMax = 1;
 };
 
 class Renderer
@@ -23,12 +23,12 @@ public:
 
 	void Render(const Scene& scene, const Camera& cam);
 
-	constexpr void SetSettings(const RenderSettings settings) { m_Settings = settings; }
+	constexpr void SetSettings(const RenderSettings&& settings) { m_Settings = settings; }
 
-	void SetImage(Image& image) { m_Image = &image; delete[] m_AccumulationData; m_AccumulationData = new Vec3f[m_Image->Width * m_Image->Height]; }
+	void SetImage(Image& image);
 
 private:
-	Vec3f PerPixel(Vec2f&& coord); // RayGen shader
+	Vec3f PerPixel(const Vec2f&& coord); // comparable to RayGen shader in GPU ray tracing
 
 	HitPayload TraceRay(const Ray<Float>& ray);
 
@@ -38,6 +38,9 @@ private:
 
 	Image* m_Image = nullptr;
 	Vec3f* m_AccumulationData = nullptr;
+
+	std::vector<uint32_t> m_ImageVerticalIter;
+	std::vector<uint32_t> m_ImageHorizontalIter;
 
 	const Camera* m_Camera = nullptr;
 	const Scene* m_Scene = nullptr;
