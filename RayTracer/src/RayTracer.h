@@ -75,6 +75,7 @@ namespace Utils
 	inline Float RandomFloat()
 	{
 		// seed the engine using a guaranteed random uint32_t
+		// when multithreading use thread_local or else all cores will try to use one instance and will impair speed
 		static thread_local std::default_random_engine eng(std::random_device{}());
 		static std::uniform_real_distribution<Float> dis(0.0, 1.0);
 		return dis(eng);
@@ -90,6 +91,7 @@ namespace Utils
 	inline Float Random(Float low, Float high)
 	{
 		// seed the engine using a guaranteed random uint32_t
+		// when multithreading use thread_local or else all cores will try to use one instance and will impair speed
 		static thread_local std::default_random_engine eng(std::random_device{}());
 		static std::uniform_real_distribution<Float> dis(low, high);
 		return dis(eng);

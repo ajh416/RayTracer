@@ -35,8 +35,8 @@ int main()
 	**/
 	scene.Shapes.push_back(new Sphere({ 0.0, 1.3, -1.0 }, 0.5, 0));
 	scene.Shapes.push_back(new Sphere({ 0.0, 0.15, -1.0 }, 0.4, 0));
-	scene.Shapes.push_back(new Sphere({ 0.0, -100.0, -1.0 }, 99.6, 1));
-	scene.Shapes.push_back(new Plane({ 0.0, 0.0, -1.0 }, 1.0, 1.0, 1));
+	//scene.Shapes.push_back(new Sphere({ 0.0, -100.0, -1.0 }, 99.6, 1));
+	//scene.Shapes.push_back(new Plane({ 0.0, 0.0, -1.0 }, 1.0, 1.0, 1));
 
 	// Vector of materials accessed using indices
 	scene.Materials.push_back(Material({ {0.3, 0.3, 0.8}, 0.1, 0.0 }));
