@@ -108,6 +108,7 @@ class Point3
 {
 public:
 	Point3() { x = y = z = 0; }
+	Point3(T xx) : x(xx), y(xx), z(xx) {}
 	Point3(T xx, T yy, T zz) : x(xx), y(yy), z(zz) { ASSERT(!HasNaNs()); }
 
 	bool HasNaNs() const
@@ -197,8 +198,7 @@ public:
 		return pow((p1 - p2).Length(), 2);
 	}
 
-Point3<T>
-	Lerp(Float t, const Point3<T>& p0, const Point3<T>& p1)
+	Point3<T> Lerp(Float t, const Point3<T>& p0, const Point3<T>& p1)
 	{
 		return (1 - t) * p0 + t * p1;
 	}

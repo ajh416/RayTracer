@@ -6,49 +6,54 @@ template<typename T>
 class Vector2
 {
 public:
-	Vector2() { x = y = 0; }
-	Vector2(T xx, T yy) : x(xx), y(yy) { ASSERT(!HasNaNs()); }
-	Vector2(T&& xx, T&& yy) : x(xx), y(yy) { ASSERT(!HasNaNs()); }
-	Vector2(std::initializer_list<T> list) { auto it = list.begin(); x = *it; ++it; y = *it; ASSERT(!HasNaNs()); }
+	//Vector2() { x = y = 0; }
+	//Vector2(T xx, T yy) : x(xx), y(yy) { ASSERT(!HasNaNs()); }
+	//Vector2(T&& xx, T&& yy) : x(xx), y(yy) { ASSERT(!HasNaNs()); }
+	//Vector2(std::initializer_list<T> list) { auto it = list.begin(); x = *it; ++it; y = *it; ASSERT(!HasNaNs()); }
+
+	constexpr Vector2() { x = y = 0; }
+	constexpr Vector2(T xx) : x(xx), y(xx) {}
+	constexpr Vector2(T&& xx, T&& yy) : x(xx), y(yy) {}
+	//constexpr Vector2(std::initializer_list<T> list) { auto it = list.begin(); x = *it; ++it; y = *it; }
 
 	bool HasNaNs() const
 	{
 		return std::isnan(x) || std::isnan(y);
 	}
 
-	Vector2<T> operator+(const Vector2<T>& v)
+	constexpr Vector2<T> operator+(const Vector2<T>& v)
 	{
 		return Vector2(x + v.x, y + v.y);
 	}
 
-	Vector2<T> operator+=(const Vector2<T>& v)
+	constexpr Vector2<T> operator+=(const Vector2<T>& v)
 	{
 		return Vector2(x += v.x, y += v.y);
 	}
 
-	Vector2<T> operator-(const Vector2<T>& v)
+	constexpr Vector2<T> operator-(const Vector2<T>& v)
 	{
 		return Vector2(x - v.x, y - v.y);
 	}
 
-	Vector2<T> operator-=(const Vector2<T>& v)
+	constexpr Vector2<T> operator-=(const Vector2<T>& v)
 	{
 		return Vector2(x -= v.x, y -= v.y);
 	}
 
-	bool operator==(const Vector2<T>& v)
+	constexpr bool operator==(const Vector2<T>& v)
 	{
 		return x == v.x && y == v.y;
 	}
 
-	bool operator!=(const Vector2<T>& v)
+	constexpr bool operator!=(const Vector2<T>& v)
 	{
 		return x != v.x || y != v.y;
 	}
 
-	Vector2<T> operator*(T f) const { return Vector2<T>(f * x, f * y); }
+	constexpr Vector2<T> operator*(T&& f) const { return Vector2<T>(f * x, f * y); }
 
-	Vector2<T>& operator*=(T f) {
+	constexpr Vector2<T>& operator*=(T f) {
 		x *= f; y *= f;
 		return *this;
 	}
@@ -65,9 +70,9 @@ public:
 		return *this;
 	}
 
-	Vector2<T> operator-() const { return Vector2<T>(-x, -y); }
+	constexpr Vector2<T> operator-() const { return Vector2<T>(-x, -y); }
 
-	Float LengthSquared() const { return x * x + y * y; }
+	constexpr Float LengthSquared() const { return x * x + y * y; }
 	Float Length() const { return std::sqrt(LengthSquared()); }
 
 	T x, y;

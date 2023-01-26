@@ -23,7 +23,7 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 				{
 					for (int i = 0; i < m_Settings.AccumulateMax; i++)
 					{
-						auto color = PerPixel({ (Float)x, (Float)y });
+						auto color = PerPixel(Vec2f((Float)x, (Float)y));
 						m_AccumulationData[x + y * m_Image->Width] += color;
 					}
 					auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
@@ -75,11 +75,11 @@ Vec3f Renderer::PerPixel(const Vec2f&& coord)
 	Vec3f res = 0.0;
 	for (int i = 0; i < m_Settings.NumberOfSamples; i++)
 	{
-		auto u = double(coord.x + Utils::RandomFloat()) / (m_Image->Width - 1); // transform the x coordinate to 0 -> 1 (rather than 0 -> image_width)
-		auto v = double(coord.y + Utils::RandomFloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
+		Float u = Float(coord.x + Utils::RandomFloat()) / (m_Image->Width - 1); // transform the x coordinate to 0 -> 1 (rather than 0 -> image_width)
+		Float v = Float(coord.y + Utils::RandomFloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
 		//auto u = Float(coord.x) / (m_Image->Width - 1);
 		//auto v = Float(coord.y) / (m_Image->Height - 1);
-		Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({ u, v }));
+		Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection(Vec2f((Float)u, (Float)v)));
 
 		auto multiplier = 1.0;
 		for (int i = 0; i < m_Settings.NumberOfBounces; i++)
