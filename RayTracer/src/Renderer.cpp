@@ -34,50 +34,66 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 					m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color); }); });
 
 #else // RT_WINDOWS
-#define NUM_THREADS 4
+#define NUM_THREADS 8
+
+	struct ImgBlock
+	{
+		uint32_t start_w, start_h, end_w, end_h;
+	};
+	std::vector<ImgBlock> blocks;
+	/*
+	 * Following section from https://superkogito.github.io/blog/2020/10/01/divide_image_using_opencv.html
+	 * Adapted by ah416 for use without opencv
+	 */
+
+	// init image dimensions
+	uint32_t imgWidth = this->m_Image->Width;
+	uint32_t imgHeight = this->m_Image->Height;
+
+	std::cout << "IMAGE SIZE: "
+			   << "(" << imgWidth << "," << imgHeight << ")" << std::endl;
+
+	// init block dimensions
+	uint32_t bwSize;
+	uint32_t bhSize;
+
+	uint32_t blockWidth = imgWidth / (NUM_THREADS / 2);
+	uint32_t blockHeight = imgHeight / (2);
+
+	uint32_t y0 = 0;
+	while (y0 < imgHeight)
+	{
+		// compute the block height
+		bhSize = ((y0 + blockHeight) > imgHeight) * (blockHeight - (y0 + blockHeight - imgHeight)) + ((y0 + blockHeight) <= imgHeight) * blockHeight;
+		int x0 = 0;
+		while (x0 < imgWidth)
+		{
+			// compute the block height
+			bwSize = ((x0 + blockWidth) > imgWidth) * (blockWidth - (x0 + blockWidth - imgWidth)) + ((x0 + blockWidth) <= imgWidth) * blockWidth;
+
+			// crop block
+			blocks.push_back(ImgBlock(x0, y0, x0 + bwSize, y0 + bhSize));
+
+			// update x-coordinate
+			x0 = x0 + blockWidth;
+		}
+
+		// update y-coordinate
+		y0 = y0 + blockHeight;
+	}
 
 	std::array<std::future<void>, NUM_THREADS> threads;
 	for (int i = 0; i < NUM_THREADS; i++)
 	{
-		threads[i] = std::async(std::launch::async, [this](int i)
-		{
-			uint32_t start_width = 0;
-			uint32_t end_width = 0;
-
-			uint32_t start_height = 0;
-			uint32_t end_height = 0;
-
-			switch (i)
+		threads[i] = std::async(
+			std::launch::async, [&](int i)
 			{
-				case 0:
-				start_width = 0;
-				end_width = this->m_Image->Width / (NUM_THREADS / 2);
-				start_height = 0;
-				end_height = this->m_Image->Height / (NUM_THREADS / 2);
-				break;
-				case 1:
-				start_width = 0;
-				end_width = this->m_Image->Width / (NUM_THREADS / 2);
-				start_height = this->m_Image->Height / (NUM_THREADS / 2);
-				end_height = this->m_Image->Height;
-				break;
-				case 2:
-				start_width = this->m_Image->Width / (NUM_THREADS / 2);
-				end_width = this->m_Image->Width;
-				start_height = this->m_Image->Height / (NUM_THREADS / 2);
-				end_height = this->m_Image->Height;
-				break;
-				case 3:
-				start_width = this->m_Image->Width / (NUM_THREADS / 2);
-				end_width = this->m_Image->Width;
-				start_height = 0;
-				end_height = this->m_Image->Height / (NUM_THREADS / 2);
-				break;
-			}
+			uint32_t start_w = blocks[i].start_w, start_h = blocks[i].start_h, end_w = blocks[i].end_w, end_h = blocks[i].end_h;
+			printf("start: (%u, %u), end: (%u, %u)\n", start_w, start_h, end_w, end_h);
 
-			for (int y = start_height; y < end_height; y++)
+			for (int y = start_h; y < end_h; y++)
 			{
-				for (int x = start_width; x < end_width; x++)
+				for (int x = start_w; x < end_w; x++)
 				{
 					for (int i = 0; i < m_Settings.AccumulateMax; i++)
 					{
@@ -89,13 +105,15 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 
 					m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
 				}
-			}
-		}, i);
+			} },
+			i);
 	}
 
 	for (int i = 0; i < NUM_THREADS; i++)
 	{
-		while (!threads[i].valid()) {}
+		while (!threads[i].valid())
+		{
+		}
 	}
 
 #endif // RT_WINDOWS
