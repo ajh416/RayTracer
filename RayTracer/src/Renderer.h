@@ -32,7 +32,7 @@ private:
 
 	HitPayload TraceRay(const Ray<Float>& ray);
 
-	HitPayload ClosestHit(const Ray<Float>& ray, Float hitDistance, int objectIndex);
+	constexpr HitPayload ClosestHit(const Ray<Float>& ray, Float hitDistance, int objectIndex);
 
 	constexpr HitPayload Miss(const Ray<Float>& ray);
 

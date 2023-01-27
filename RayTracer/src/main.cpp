@@ -8,7 +8,7 @@
 #include "Sphere.h"
 #include "Box.h"
 
-// TODO: BOUNDING BOXES AND RAY HIT DETECTION
+// TODO: More shapes, refactor inheritance
 
 int main()
 {
@@ -16,8 +16,8 @@ int main()
 
 	Logger::Init();
 
-	constexpr int image_width = 1000;
-	constexpr float aspect_ratio = 16.0f / 9.0f;
+	constexpr int image_width = 1920;
+	constexpr float aspect_ratio = 16.0f / 10.0f;
 	constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
 
 	Renderer renderer;
@@ -36,6 +36,7 @@ int main()
 	scene.Shapes.push_back(new Sphere({ 0.0, 1.3, -1.0 }, 0.5, 0));
 	scene.Shapes.push_back(new Sphere({ 0.0, 0.15, -1.0 }, 0.4, 0));
 	scene.Shapes.push_back(new Box(Bounds3<Float>(Point3<Float>{ 1.0, 0.0, 1.5 }, Point3<Float>{ 2.0, 1.0, -2.0 }), 1));
+	scene.Shapes.push_back(new Box(Bounds3<Float>(Point3<Float>{ -1.0, 0.0, 1.5 }, Point3<Float>{ -2.0, 1.0, -2.0 }), 1));
 
 	//scene.Shapes.push_back(new Sphere({ 0.0, -100.0, -1.0 }, 99.6, 1));
 
