@@ -146,7 +146,7 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord)
 		Float v = Float(coord.y + Utils::RandomFloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
 		// auto u = Float(coord.x) / (m_Image->Width - 1);
 		// auto v = Float(coord.y) / (m_Image->Height - 1);
-		Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection(Vec2f((Float)u, (Float)v)));
+		Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({u, v}));
 
 		auto multiplier = 1.0;
 		for (int i = 0; i < m_Settings.NumberOfBounces; i++)

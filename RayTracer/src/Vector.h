@@ -14,7 +14,7 @@ public:
 	constexpr Vector2() { x = y = 0; }
 	constexpr Vector2(T xx) : x(xx), y(xx) {}
 	constexpr Vector2(T&& xx, T&& yy) : x(xx), y(yy) {}
-	//constexpr Vector2(std::initializer_list<T> list) { auto it = list.begin(); x = *it; ++it; y = *it; }
+	constexpr Vector2(std::initializer_list<T> list) { auto it = list.begin(); x = *it; ++it; y = *it; }
 
 	bool HasNaNs() const
 	{

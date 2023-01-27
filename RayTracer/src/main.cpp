@@ -8,7 +8,7 @@
 #include "Sphere.h"
 #include "Box.h"
 
-// TODO: More shapes, refactor inheritance
+// TODO: TRIANGLES AND TRIANGLE MESHES
 
 int main()
 {
@@ -26,17 +26,24 @@ int main()
 	renderer.SetSettings({ .NumberOfSamples = 1, .NumberOfBounces = 3, .Accumulate = true, .AccumulateMax = 25 });
 
 	Image img(image_width, image_height, 4);
-	Camera cam(image_width, aspect_ratio, { 0, 0, 0 });
+	Camera cam(image_width, aspect_ratio, { 0, 0.5, 0 });
 	Scene scene;
 
 	/**
 	 * For shapes, Z must be negative to be "seen" by the camera
 	 * From RaytracingInOneWeekend, we use a right-handed coordinate system
 	**/
-	scene.Shapes.push_back(new Sphere({ 0.0, 1.3, -1.0 }, 0.5, 0));
-	scene.Shapes.push_back(new Sphere({ 0.0, 0.15, -1.0 }, 0.4, 0));
-	scene.Shapes.push_back(new Box(Bounds3<Float>(Point3<Float>{ 1.0, 0.0, 1.5 }, Point3<Float>{ 2.0, 1.0, -2.0 }), 1));
-	scene.Shapes.push_back(new Box(Bounds3<Float>(Point3<Float>{ -1.0, 0.0, 1.5 }, Point3<Float>{ -2.0, 1.0, -2.0 }), 1));
+	//scene.Shapes.push_back(new Sphere({ 0.0, 1.3, -1.0 }, 0.5, 0));
+	scene.Shapes.push_back(new Sphere({ 0.0, 0.25, -0.75 }, 0.25, 0));
+
+	// Floor
+	scene.Shapes.push_back(new Box(Bounds3f(Point3f{ -0.5, -0.1, 0.0 }, Point3f{ 0.5, 0.0, -1.0 }), 0));
+	// Back wall
+	scene.Shapes.push_back(new Box(Bounds3f(Point3f{ -0.5, 0.0, -1.0 }, Point3f{ 0.5, 1.0, -1.5 }), 0));
+	// Right wall
+	scene.Shapes.push_back(new Box(Bounds3f(Point3f{ 1.0, 0.0, 1.5 }, Point3f{ 2.0, 1.0, -2.0 }), 0));
+	// Left wall
+	scene.Shapes.push_back(new Box(Bounds3f(Point3f{ -1.0, 0.0, 1.5 }, Point3f{ -2.0, 1.0, -2.0 }), 0));
 
 	//scene.Shapes.push_back(new Sphere({ 0.0, -100.0, -1.0 }, 99.6, 1));
 
