@@ -44,6 +44,20 @@ project "RayTracer"
 		"_CRT_SECURE_NO_WARNINGS"
 	}
 
+	filter "system:windows"
+
+		defines
+		{
+			"RT_WINDOWS"
+		}
+	
+	filter "system:linux"
+
+		defines
+		{
+			"RT_LINUX"
+		}
+	
 	filter "configurations:Debug"
 		symbols "On"
 

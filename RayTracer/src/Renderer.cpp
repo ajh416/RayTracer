@@ -5,7 +5,7 @@
 
 #include <future>
 #include <execution>
-#include <stdio.h>
+#include <array>
 
 void Renderer::Render(const Scene &scene, const Camera &cam)
 {
@@ -15,20 +15,11 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 	if (!m_Settings.Accumulate)
 		m_Settings.AccumulateMax = 1;
 
-// MULTITHREADING DOESN'T WORK ON LINUX
-#ifdef _WIN32
 #define MT 1
-#else
-#define MT 0
-
-#define NUM_THREADS 4
-
-#endif
-
-// This also doesn't work yet...
-#define MT_LINUX 0
 #if MT
+#if RT_WINDOWS
 
+	// This doesn't work on linux apparently...
 	std::for_each(std::execution::par, m_ImageVerticalIter.begin(), m_ImageVerticalIter.end(), [this](uint32_t y)
 				  { std::for_each(std::execution::par, m_ImageHorizontalIter.begin(), m_ImageHorizontalIter.end(), [this, y](uint32_t x)
 								  {
@@ -42,7 +33,8 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 
 					m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color); }); });
 
-#elif MT_LINUX
+#else // RT_WINDOWS
+#define NUM_THREADS 4
 
 	std::array<std::future<void>, NUM_THREADS> threads;
 	for (int i = 0; i < NUM_THREADS; i++)
@@ -50,12 +42,10 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 		threads[i] = std::async(std::launch::async, [this](int i)
 		{
 			uint32_t start_width = 0;
-			uint32_t end_width = (this->m_Image->Width / NUM_THREADS) * (i + 1);
-			//uint32_t end_width = this->m_Image->Width;
+			uint32_t end_width = 0;
 
 			uint32_t start_height = 0;
-			uint32_t end_height = (this->m_Image->Height / NUM_THREADS) * (i + 1);
-			//uint32_t end_height = this->m_Image->Height;
+			uint32_t end_height = 0;
 
 			switch (i)
 			{
@@ -108,7 +98,9 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 		while (!threads[i].valid()) {}
 	}
 
-#else
+#endif // RT_WINDOWS
+
+#else // MT
 
 	for (int y = 0; y < (int)m_Image->Height; y++)
 	{
@@ -126,7 +118,7 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 		}
 	}
 
-#endif
+#endif // MT
 }
 
 void Renderer::SetImage(Image &image)
