@@ -101,12 +101,6 @@ public:
 		return Vector3(x + v.x, y + v.y, z + v.z);
 	}
 
-	//template<typename U>
-	//constexpr Vector3<T> operator+(const U& t)
-	//{
-	//	return Vector3(x + t, y + t, z + t);
-	//}
-
 	constexpr Vector3<T>& operator+=(const Vector3<T>& v)
 	{
 		x += v.x;
@@ -143,8 +137,6 @@ public:
 	{
 		return (x > v.x && y > v.y && z > v.y);
 	}
-
-	//operator uint32_t() { auto x = Utils::Vec3FloatToVec3Byte<T>(*this); return 0xff000000 | (x.z << 16) | (x.y << 8) | x.x; }
 
 	constexpr Vector3<T> operator*(T f) const { return Vector3<T>(f * x, f * y, f * z); }
 

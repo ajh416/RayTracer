@@ -7,7 +7,7 @@
 #include <execution>
 #include <array>
 
-void Renderer::Render(const Scene &scene, const Camera &cam)
+void Renderer::Render(const Scene& scene, const Camera& cam)
 {
 	m_Camera = &cam;
 	m_Scene = &scene;
@@ -16,22 +16,23 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 		m_Settings.AccumulateMax = 1;
 
 #define MT 1
+
 #if MT
 #if RT_WINDOWS
 
 	// This doesn't work on linux apparently...
 	std::for_each(std::execution::par, m_ImageVerticalIter.begin(), m_ImageVerticalIter.end(), [this](uint32_t y)
-				  { std::for_each(std::execution::par, m_ImageHorizontalIter.begin(), m_ImageHorizontalIter.end(), [this, y](uint32_t x)
-								  {
-					for (int i = 0; i < m_Settings.AccumulateMax; i++)
-					{
-						auto color = PerPixel(Vec2f((Float)x, (Float)y));
-						m_AccumulationData[x + y * m_Image->Width] += color;
-					}
-					auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
-					accumulated_color /= (Float)m_Settings.AccumulateMax;
+		{ std::for_each(std::execution::par, m_ImageHorizontalIter.begin(), m_ImageHorizontalIter.end(), [this, y](uint32_t x)
+			{
+				for (int i = 0; i < m_Settings.AccumulateMax; i++)
+				{
+					auto color = PerPixel(Vec2f((Float)x, (Float)y));
+					m_AccumulationData[x + y * m_Image->Width] += color;
+				}
+	auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
+	accumulated_color /= (Float)m_Settings.AccumulateMax;
 
-					m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color); }); });
+	m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color); }); });
 
 #else // RT_WINDOWS
 #define NUM_THREADS 8
@@ -46,12 +47,12 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 	 * Adapted by ah416 for use without opencv
 	 */
 
-	// init image dimensions
+	 // init image dimensions
 	uint32_t imgWidth = this->m_Image->Width;
 	uint32_t imgHeight = this->m_Image->Height;
 
 	std::cout << "IMAGE SIZE: "
-			   << "(" << imgWidth << "," << imgHeight << ")" << std::endl;
+		<< "(" << imgWidth << "," << imgHeight << ")" << std::endl;
 
 	// init block dimensions
 	uint32_t bwSize;
@@ -88,24 +89,24 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 		threads[i] = std::async(
 			std::launch::async, [&](int i)
 			{
-			uint32_t start_w = blocks[i].start_w, start_h = blocks[i].start_h, end_w = blocks[i].end_w, end_h = blocks[i].end_h;
-			printf("start: (%u, %u), end: (%u, %u)\n", start_w, start_h, end_w, end_h);
+				uint32_t start_w = blocks[i].start_w, start_h = blocks[i].start_h, end_w = blocks[i].end_w, end_h = blocks[i].end_h;
+		printf("start: (%u, %u), end: (%u, %u)\n", start_w, start_h, end_w, end_h);
 
-			for (int y = start_h; y < end_h; y++)
+		for (int y = start_h; y < end_h; y++)
+		{
+			for (int x = start_w; x < end_w; x++)
 			{
-				for (int x = start_w; x < end_w; x++)
+				for (int i = 0; i < m_Settings.AccumulateMax; i++)
 				{
-					for (int i = 0; i < m_Settings.AccumulateMax; i++)
-					{
-						auto color = PerPixel({(Float)x, (Float)y});
-						m_AccumulationData[x + y * this->m_Image->Width] += color;
-					}
-					auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
-					accumulated_color /= (Float)m_Settings.AccumulateMax;
-
-					m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
+					auto color = PerPixel({ (Float)x, (Float)y });
+					m_AccumulationData[x + y * this->m_Image->Width] += color;
 				}
-			} },
+				auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
+				accumulated_color /= (Float)m_Settings.AccumulateMax;
+
+				m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
+			}
+		} },
 			i);
 	}
 
@@ -126,7 +127,7 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 		{
 			for (int i = 0; i < m_Settings.AccumulateMax; i++)
 			{
-				auto color = PerPixel({(Float)x, (Float)y});
+				auto color = PerPixel({ (Float)x, (Float)y });
 				m_AccumulationData[x + y * m_Image->Width] += color;
 			}
 			auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
@@ -139,7 +140,7 @@ void Renderer::Render(const Scene &scene, const Camera &cam)
 #endif // MT
 }
 
-void Renderer::SetImage(Image &image)
+void Renderer::SetImage(Image& image)
 {
 	m_Image = &image;
 	delete[] m_AccumulationData;
@@ -155,7 +156,7 @@ void Renderer::SetImage(Image &image)
 		m_ImageHorizontalIter[y] = y;
 }
 
-Vec3f Renderer::PerPixel(const Vec2f &&coord)
+Vec3f Renderer::PerPixel(const Vec2f&& coord)
 {
 	Vec3f res = 0.0;
 	for (int i = 0; i < m_Settings.NumberOfSamples; i++)
@@ -164,7 +165,7 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord)
 		Float v = Float(coord.y + Utils::RandomFloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
 		// auto u = Float(coord.x) / (m_Image->Width - 1);
 		// auto v = Float(coord.y) / (m_Image->Height - 1);
-		Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({u, v}));
+		Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({ u, v }));
 
 		auto multiplier = 1.0;
 		for (int i = 0; i < m_Settings.NumberOfBounces; i++)
@@ -180,10 +181,10 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord)
 				continue;
 			}
 
-			const auto shape = m_Scene->Shapes[payload.ObjectIndex];
-			const auto &material = m_Scene->Materials[shape->MaterialIndex];
+			const Shape* shape = m_Scene->Shapes[payload.ObjectIndex];
+			const Material& material = m_Scene->Materials[shape->MaterialIndex];
 
-			Vec3f light_dir = Normalize(Vec3f(0, -0.4, -1));
+			Vec3f light_dir = Normalize(Vec3f(0, -1, -2));
 			Float light_intensity = Utils::Max(Dot(payload.WorldNormal, -light_dir), 0.0); // == cos(angle)
 
 			auto shape_color = material.Albedo;
@@ -201,14 +202,14 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord)
 	return res / (m_Settings.NumberOfSamples * m_Settings.NumberOfBounces);
 }
 
-HitPayload Renderer::TraceRay(const Ray<Float> &ray)
+HitPayload Renderer::TraceRay(const Ray<Float>& ray)
 {
 	int objectIndex = -1;
 	Float hitDistance = std::numeric_limits<Float>::max();
 
 	for (int i = 0; i < m_Scene->Shapes.size(); i++)
 	{
-		const Shape *shape = m_Scene->Shapes[i];
+		const Shape* shape = m_Scene->Shapes[i];
 		Float newDistance = 0;
 
 		if (shape->Hit(ray, 0, hitDistance, newDistance))
@@ -227,13 +228,13 @@ HitPayload Renderer::TraceRay(const Ray<Float> &ray)
 	return ClosestHit(ray, hitDistance, objectIndex);
 }
 
-constexpr HitPayload Renderer::ClosestHit(const Ray<Float> &ray, Float hitDistance, int objectIndex)
+constexpr HitPayload Renderer::ClosestHit(const Ray<Float>& ray, Float hitDistance, int objectIndex)
 {
 	HitPayload payload;
 	payload.HitDistance = hitDistance;
 	payload.ObjectIndex = objectIndex;
 
-	const Shape *closestShape = m_Scene->Shapes[objectIndex];
+	const Shape* closestShape = m_Scene->Shapes[objectIndex];
 
 	Vec3f origin = ray.Origin - closestShape->Origin;
 	payload.WorldPosition = origin + hitDistance * ray.Direction;
@@ -243,8 +244,8 @@ constexpr HitPayload Renderer::ClosestHit(const Ray<Float> &ray, Float hitDistan
 	return payload;
 }
 
-constexpr HitPayload Renderer::Miss(const Ray<Float> &ray)
+constexpr HitPayload Renderer::Miss(const Ray<Float>& ray)
 {
-	constexpr HitPayload payload = {.HitDistance = -1};
+	constexpr HitPayload payload = { .HitDistance = -1 };
 	return payload;
 }
