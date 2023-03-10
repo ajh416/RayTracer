@@ -1,7 +1,8 @@
-# CPU RayTracer made by [Adam Henry](https://github.com/ah416)
+# CPU RayTracer made by [ah416](https://github.com/ah416)
 
-## Inspired by [RaytracingInOneWeekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html), [PBRT](https://pbr-book.org/), and [TheCherno](https://youtube.com/TheCherno) RayTracing series.
 ## Currently supports spheres and boxes as the only shapes, with support for triangle meshes in the works.
+
+### Inspired by [RaytracingInOneWeekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html), [PBRT](https://pbr-book.org/), and [TheCherno](https://youtube.com/TheCherno) RayTracing series.
 
 ### Usage
 The main.cpp file provides an example of the usage of the RayTracer.
