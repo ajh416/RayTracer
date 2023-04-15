@@ -26,11 +26,11 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 			{
 				for (int i = 0; i < m_Settings.AccumulateMax; i++)
 				{
-					auto color = PerPixel(Vec2f((Float)x, (Float)y));
+					auto color = PerPixel(Vec2f((float)x, (float)y));
 					m_AccumulationData[x + y * m_Image->Width] += color;
 				}
 	auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
-	accumulated_color /= (Float)m_Settings.AccumulateMax;
+	accumulated_color /= (float)m_Settings.AccumulateMax;
 
 	m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color); }); });
 
@@ -62,13 +62,11 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 	uint32_t blockHeight = imgHeight / (2);
 
 	uint32_t y0 = 0;
-	while (y0 < imgHeight)
-	{
+	while (y0 < imgHeight) {
 		// compute the block height
 		bhSize = ((y0 + blockHeight) > imgHeight) * (blockHeight - (y0 + blockHeight - imgHeight)) + ((y0 + blockHeight) <= imgHeight) * blockHeight;
 		int x0 = 0;
-		while (x0 < imgWidth)
-		{
+		while (x0 < imgWidth) {
 			// compute the block height
 			bwSize = ((x0 + blockWidth) > imgWidth) * (blockWidth - (x0 + blockWidth - imgWidth)) + ((x0 + blockWidth) <= imgWidth) * blockWidth;
 
@@ -84,38 +82,30 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 	}
 
 	std::array<std::future<void>, NUM_THREADS> threads;
-	for (int i = 0; i < NUM_THREADS; i++)
-	{
+	for (int i = 0; i < NUM_THREADS; i++) {
 		threads[i] = std::async(
-			std::launch::async, [&](int i)
-			{
+			std::launch::async, [&](int i) {
 				uint32_t start_w = blocks[i].start_w, start_h = blocks[i].start_h, end_w = blocks[i].end_w, end_h = blocks[i].end_h;
-		printf("start: (%u, %u), end: (%u, %u)\n", start_w, start_h, end_w, end_h);
+		printf("thread %i start: (%u, %u), end: (%u, %u)\n", start_w, start_h, end_w, end_h);
 
-		for (int y = start_h; y < end_h; y++)
-		{
-			for (int x = start_w; x < end_w; x++)
-			{
-				for (int i = 0; i < m_Settings.AccumulateMax; i++)
-				{
-					auto color = PerPixel({ (Float)x, (Float)y });
+		for (int y = start_h; y < end_h; y++) {
+			for (int x = start_w; x < end_w; x++) {
+				for (int i = 0; i < m_Settings.AccumulateMax; i++) {
+					auto color = PerPixel({ (float)x, (float)y });
 					m_AccumulationData[x + y * this->m_Image->Width] += color;
 				}
 				auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
-				accumulated_color /= (Float)m_Settings.AccumulateMax;
+				accumulated_color /= (float)m_Settings.AccumulateMax;
 
 				m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
 			}
-		} },
-			i);
+		}
+	}, i);
 	}
 
+	// Wait while the threads complete. TODO: IS THIS NECESSARY?
 	for (int i = 0; i < NUM_THREADS; i++)
-	{
-		while (!threads[i].valid())
-		{
-		}
-	}
+		while (!threads[i].valid()) {}
 
 #endif // RT_WINDOWS
 
@@ -127,11 +117,11 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 		{
 			for (int i = 0; i < m_Settings.AccumulateMax; i++)
 			{
-				auto color = PerPixel({ (Float)x, (Float)y });
+				auto color = PerPixel({ (float)x, (float)y });
 				m_AccumulationData[x + y * m_Image->Width] += color;
 			}
 			auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
-			accumulated_color /= (Float)m_Settings.AccumulateMax;
+			accumulated_color /= (float)m_Settings.AccumulateMax;
 
 			m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
 		}
@@ -158,64 +148,76 @@ void Renderer::SetImage(Image& image)
 
 Vec3f Renderer::PerPixel(const Vec2f&& coord)
 {
-	Vec3f res = 0.0;
+	Vec3f light_res = 0.0f;
+	Vec3f res = 0.0f;
+
 	for (int i = 0; i < m_Settings.NumberOfSamples; i++)
 	{
-		Float u = Float(coord.x + Utils::RandomFloat()) / (m_Image->Width - 1);	 // transform the x coordinate to 0 -> 1 (rather than 0 -> image_width)
-		Float v = Float(coord.y + Utils::RandomFloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
-		// auto u = Float(coord.x) / (m_Image->Width - 1);
-		// auto v = Float(coord.y) / (m_Image->Height - 1);
-		Ray<Float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({ u, v }));
+		Vec3f bounce_res = 0.0f;
+		Vec3f ray_color = 1.0f;
 
-		auto multiplier = 1.0;
-		for (int i = 0; i < m_Settings.NumberOfBounces; i++)
+		float u = float(coord.x + Utils::Randomfloat()) / (m_Image->Width - 1);	 // transform the x coordinate to 0 -> 1 (rather than 0 -> image_width)
+		float v = float(coord.y + Utils::Randomfloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1 (rather than 0 -> image_height)
+		// auto u = float(coord.x) / (m_Image->Width - 1);
+		// auto v = float(coord.y) / (m_Image->Height - 1);
+		Ray<float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({ u, v }));
+
+		float multiplier = 1.0;
+
+		for (int i = 0; i < m_Settings.NumberOfBounces + 1; i++)
 		{
 			auto payload = TraceRay(r);
-			if (payload.HitDistance < 0)
+			if (payload.HitDistance < 0) // did not hit object
 			{
-				Vector3 unit_direction = Normalize(r.Direction); // the unit vector (magnitude == 1) of the rays direction
-				auto t = 0.5 * (unit_direction.y + 1.0);		 // make t 0 -> 1
+				//Vector3 unit_direction = Normalize(r.Direction); // the unit vector (magnitude == 1) of the rays direction
+				//auto t = 0.5f * (unit_direction.y + 1.0f);		 // make t 0 -> 1
 
-				res += Utils::Lerp(Vec3f(1.0), Vec3f(0.5, 0.7, 1.0), t) * multiplier;
+				//res += Utils::Lerp(Vec3f(1.0), Vec3f(0.5f, 0.7f, 1.0f), t) * multiplier;
+				//bounce_res += Vec3f(0.0f);
 
-				continue;
+				break;
 			}
 
 			const Shape* shape = m_Scene->Shapes[payload.ObjectIndex];
 			const Material& material = m_Scene->Materials[shape->MaterialIndex];
 
-			Vec3f light_dir = Normalize(Vec3f(0, -1, -2));
-			Float light_intensity = Utils::Max(Dot(payload.WorldNormal, -light_dir), 0.0); // == cos(angle)
+			//Vec3f light_dir = Normalize(Vec3f(0, 1, -1));
+			//float light_intensity = Utils::Max(Dot(payload.WorldNormal, -light_dir), 0.0f); // == cos(angle)
 
-			auto shape_color = material.Albedo;
-			shape_color *= light_intensity;
+			//Vec3f shape_color = material.Albedo;
+			Vec3f emitted_light = material.EmissionColor * material.EmissionStrength;
+			bounce_res += emitted_light * ray_color;
+			ray_color = ray_color * material.Albedo;
 
-			res += Utils::Clamp(shape_color * multiplier, Vec3f(0.0), Vec3f(1.0));
+			//shape_color *= light_intensity;
+
+			//res += Utils::Clamp(shape_color * multiplier, Vec3f(0.0), Vec3f(1.0));
+			//bounce_res += Utils::Clamp(shape_color * multiplier, Vec3f(0.0), Vec3f(1.0));
 
 			multiplier *= 0.5;
 
-			r.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001;
+			r.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
 			r.Direction = Reflect(r.Direction, payload.WorldNormal + material.Roughness * Utils::RandomVector(-0.5, 0.5));
 		}
+
+		res += Utils::Clamp(bounce_res, Vec3f(0.0f), Vec3f(1.0f));
 	}
 
-	return res / (m_Settings.NumberOfSamples * m_Settings.NumberOfBounces);
+	//return res / (float)(m_Settings.NumberOfSamples * m_Settings.NumberOfBounces);
+	return res / (float)(m_Settings.NumberOfSamples);
 }
 
-HitPayload Renderer::TraceRay(const Ray<Float>& ray)
+HitPayload Renderer::TraceRay(const Ray<float>& ray)
 {
 	int objectIndex = -1;
-	Float hitDistance = std::numeric_limits<Float>::max();
+	float hitDistance = std::numeric_limits<float>::max();
 
-	for (int i = 0; i < m_Scene->Shapes.size(); i++)
-	{
+	for (int i = 0; i < m_Scene->Shapes.size(); i++) {
 		const Shape* shape = m_Scene->Shapes[i];
-		Float newDistance = 0;
+		float newDistance = 0;
 
-		if (shape->Hit(ray, 0, hitDistance, newDistance))
-		{
-			if (newDistance > 0.0 && newDistance < hitDistance)
-			{
+		if (shape->Hit(ray, 0, hitDistance, newDistance)) {
+			if (newDistance > 0.0 && newDistance < hitDistance) {
 				hitDistance = newDistance;
 				objectIndex = i;
 			}
@@ -228,7 +230,7 @@ HitPayload Renderer::TraceRay(const Ray<Float>& ray)
 	return ClosestHit(ray, hitDistance, objectIndex);
 }
 
-constexpr HitPayload Renderer::ClosestHit(const Ray<Float>& ray, Float hitDistance, int objectIndex)
+constexpr HitPayload Renderer::ClosestHit(const Ray<float>& ray, float hitDistance, int objectIndex)
 {
 	HitPayload payload;
 	payload.HitDistance = hitDistance;
@@ -244,7 +246,7 @@ constexpr HitPayload Renderer::ClosestHit(const Ray<Float>& ray, Float hitDistan
 	return payload;
 }
 
-constexpr HitPayload Renderer::Miss(const Ray<Float>& ray)
+constexpr HitPayload Renderer::Miss(const Ray<float>& ray)
 {
 	constexpr HitPayload payload = { .HitDistance = -1 };
 	return payload;

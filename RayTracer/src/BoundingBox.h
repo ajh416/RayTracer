@@ -17,7 +17,7 @@ public:
 		pMax = Point2<T>(minNum, minNum);
 	}
 
-	Bounds2(const Point2<Float>& point) : pMin(point), pMax(point)
+	Bounds2(const Point2<float>& point) : pMin(point), pMax(point)
 	{
 	}
 
@@ -29,8 +29,8 @@ public:
 
 	constexpr Vec2f Center() const
 	{
-		Vec2f min = Vec2f((Float)pMin.x, (Float)pMin.y);
-		Vec2f max = Vec2f((Float)pMax.x, (Float)pMax.y);
+		Vec2f min = Vec2f((float)pMin.x, (float)pMin.y);
+		Vec2f max = Vec2f((float)pMax.x, (float)pMax.y);
 		auto direction = max - min;
 		return min + direction * 0.5;
 	}
@@ -51,7 +51,7 @@ public:
 		pMax = Point3<T>(minNum, minNum, minNum);
 	}
 
-	Bounds3(const Point3<Float>& point) : pMin(point), pMax(point)
+	Bounds3(const Point3<float>& point) : pMin(point), pMax(point)
 	{
 	}
 
@@ -66,7 +66,7 @@ public:
 		Vec3f min = Vec3f(pMin.x, pMin.y, pMin.z);
 		Vec3f max = Vec3f(pMax.x, pMax.y, pMax.z);
 		auto direction = max - min;
-		return min + direction * 0.5;
+		return min + direction * 0.5f;
 	}
 
 public:

@@ -9,10 +9,10 @@
 
 struct RenderSettings
 {
-	uint32_t NumberOfSamples = 1;
-	uint32_t NumberOfBounces = 1;
+	int NumberOfSamples = 1;
+	int NumberOfBounces = 1;
 	bool Accumulate = true;
-	uint32_t AccumulateMax = 1;
+	int AccumulateMax = 1;
 };
 
 class Renderer
@@ -30,11 +30,11 @@ public:
 private:
 	Vec3f PerPixel(const Vec2f&& coord); // comparable to RayGen shader in GPU ray tracing
 
-	HitPayload TraceRay(const Ray<Float>& ray);
+	HitPayload TraceRay(const Ray<float>& ray);
 
-	constexpr HitPayload ClosestHit(const Ray<Float>& ray, Float hitDistance, int objectIndex);
+	constexpr HitPayload ClosestHit(const Ray<float>& ray, float hitDistance, int objectIndex);
 
-	constexpr HitPayload Miss(const Ray<Float>& ray);
+	constexpr HitPayload Miss(const Ray<float>& ray);
 
 	Image* m_Image = nullptr;
 	Vec3f* m_AccumulationData = nullptr;

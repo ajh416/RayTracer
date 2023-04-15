@@ -74,13 +74,13 @@ public:
 
 	Point2<T> operator/ (T f) const
 	{
-		Float inv = (Float)1 / f;
+		float inv = (float)1 / f;
 		return Point2<T>(inv * x, inv * y);
 	}
 
 	Point2<T>& operator/=(T f)
 	{
-		Float inv = (Float)1 / f;
+		float inv = (float)1 / f;
 		x *= inv; y *= inv;
 		return *this;
 	}
@@ -167,13 +167,13 @@ public:
 
 	Point3<T> operator/(T f) const
 	{
-		Float inv = (Float)1 / f;
+		float inv = (float)1 / f;
 		return Point3<T>(inv * x, inv * y, inv * z);
 	}
 
 	Point3<T>& operator/=(T f)
 	{
-		Float inv = (Float)1 / f;
+		float inv = (float)1 / f;
 		x *= inv; y *= inv; z *= inv;
 		return *this;
 	}
@@ -188,17 +188,17 @@ public:
 		return x != p.x || y != p.y || z != p.z;
 	}
 
-	inline Float Distance(const Point3<T>& p1, const Point3<T>& p2)
+	inline float Distance(const Point3<T>& p1, const Point3<T>& p2)
 	{
 		return (p1 - p2).Length();
 	}
 
-	inline Float DistanceSquared(const Point3<T>& p1, const Point3<T>& p2)
+	inline float DistanceSquared(const Point3<T>& p1, const Point3<T>& p2)
 	{
 		return pow((p1 - p2).Length(), 2);
 	}
 
-	Point3<T> Lerp(Float t, const Point3<T>& p0, const Point3<T>& p1)
+	Point3<T> Lerp(float t, const Point3<T>& p0, const Point3<T>& p1)
 	{
 		return (1 - t) * p0 + t * p1;
 	}

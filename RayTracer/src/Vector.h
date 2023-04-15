@@ -59,21 +59,21 @@ public:
 	}
 	Vector2<T> operator/(T f) const {
 		ASSERT(f != 0);
-		Float inv = (Float)1 / f;
+		float inv = (float)1 / f;
 		return Vector2<T>(x * inv, y * inv);
 	}
 
 	Vector2<T>& operator/=(T f) {
 		ASSERT(f != 0);
-		Float inv = (Float)1 / f;
+		float inv = (float)1 / f;
 		x *= inv; y *= inv;
 		return *this;
 	}
 
 	constexpr Vector2<T> operator-() const { return Vector2<T>(-x, -y); }
 
-	constexpr Float LengthSquared() const { return x * x + y * y; }
-	Float Length() const { return std::sqrt(LengthSquared()); }
+	constexpr float LengthSquared() const { return x * x + y * y; }
+	float Length() const { return std::sqrt(LengthSquared()); }
 
 	T x, y;
 };
@@ -138,7 +138,9 @@ public:
 		return (x > v.x && y > v.y && z > v.y);
 	}
 
-	constexpr Vector3<T> operator*(T f) const { return Vector3<T>(f * x, f * y, f * z); }
+	constexpr Vector3<T> operator*(const Vector3<T> f) const { return Vector3<T>(f.x * x, f.y * y, f.z * z); }
+
+	constexpr Vector3<T> operator*(const T t) const { return Vector3<T>(x * t, y * t, z * t); }
 
 	constexpr Vector3<T>& operator*=(T f) {
 		x *= f; y *= f; z *= f;
@@ -147,27 +149,32 @@ public:
 
 	constexpr Vector3<T> operator/(T f) const {
 		ASSERT(f != 0);
-		Float inv = (Float)1 / f;
+		float inv = (float)1 / f;
 		return Vector3<T>(x * inv, y * inv, z * inv);
 	}
 
 	constexpr Vector3<T>& operator/=(T f) {
 		ASSERT(f != 0);
-		Float inv = (Float)1 / f;
+		float inv = (float)1 / f;
 		x *= inv; y *= inv; z *= inv;
 		return *this;
 	}
 
 	constexpr Vector3<T> operator-() const { return Vector3<T>(-x, -y, -z); }
 
-	constexpr Float LengthSquared() const { return x * x + y * y + z * z; }
-	Float Length() const { return std::sqrt(LengthSquared()); }
+	constexpr float LengthSquared() const { return x * x + y * y + z * z; }
+	float Length() const { return std::sqrt(LengthSquared()); }
 
 	T x, y, z;
 };
 
 template<typename T, typename U>
 constexpr inline Vector3<T> operator*(U t, const Vector3<T> v) {
+	return v * t;
+}
+
+template<typename T, typename U>
+constexpr inline Vector3<T> operator*(const Vector3<T> v, U t) {
 	return v * t;
 }
 
@@ -218,7 +225,7 @@ inline Vector3<T> Unit(const Vector3<T>& v) { Normalize(v); }
 template<typename T>
 inline Vector3<T> Reflect(const Vector3<T>& I, const Vector3<T>& N)
 {
-	return I - 2.0 * Dot(N, I) * N;
+	return I - 2.0f * Dot(N, I) * N;
 }
 
 // Vector2 ostream operator
@@ -238,9 +245,9 @@ std::ostream& operator<<(std::ostream& os, Vector3<T> vec)
 namespace Utils
 {
 	template<typename T>
-	constexpr inline Vector3<T> Lerp(const Vector3<T>& v1, const Vector3<T>& v2, const Float t)
+	constexpr inline Vector3<T> Lerp(const Vector3<T>& v1, const Vector3<T>& v2, const float t)
 	{
-		return (1.0 - t) * v1 + t * v2;
+		return (1.0f - t) * v1 + t * v2;
 	}
 
 	template<typename T>
@@ -254,14 +261,14 @@ namespace Utils
 		return vec;
 	}
 
-	inline Vec3f RandomVector(Float low, Float high)
+	inline Vec3f RandomVector(float low, float high)
 	{
 		return Vec3f(Utils::Random(low, high), Utils::Random(low, high), Utils::Random(low, high));
 	}
 
-	// assumes that vec is Float
+	// assumes that vec is float
 	template<typename T>
-	constexpr inline Vector3<uint8_t> Vec3FloatToVec3Byte(const Vector3<T>& vec)
+	constexpr inline Vector3<uint8_t> Vec3floatToVec3Byte(const Vector3<T>& vec)
 	{
 		Vector3<uint8_t> newVec;
 		newVec.x = static_cast<uint8_t>(255.0 * vec.x);
@@ -270,9 +277,9 @@ namespace Utils
 		return newVec;
 	}
 
-	constexpr inline uint32_t VectorToUInt32(Vector3<Float> vec)
+	constexpr inline uint32_t VectorToUInt32(Vector3<float> vec)
 	{
-		auto byte_vec = Vec3FloatToVec3Byte(vec);
+		auto byte_vec = Vec3floatToVec3Byte(vec);
 
 		return 0xff000000 | (byte_vec.z << 16) | (byte_vec.y << 8) | (byte_vec.x);
 	}

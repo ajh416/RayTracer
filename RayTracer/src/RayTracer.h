@@ -12,53 +12,45 @@
 
 #include "Timer.h"
 
-#define FLOAT_AS_DOUBLE
-
-#ifdef FLOAT_AS_DOUBLE
-using Float = double;
-#else
-using Float = float;
-#endif
-
 template<typename T>
 class Bounds2;
 template<typename T>
 class Bounds3;
 
-using Bounds2f = Bounds2<Float>;
-using Bounds3f = Bounds3<Float>;
+using Bounds2f = Bounds2<float>;
+using Bounds3f = Bounds3<float>;
 
 template<typename T>
 class Point2;
 template<typename T>
 class Point3;
 
-using Point2f = Point2<Float>;
-using Point3f = Point3<Float>;
+using Point2f = Point2<float>;
+using Point3f = Point3<float>;
 
 template<typename T>
 class Vector2;
 template<typename T>
 class Vector3;
 
-using Vector2f = Vector2<Float>;
+using Vector2f = Vector2<float>;
 using Vec2f = Vector2f;
 using Vector2i = Vector2<int>;
 using Vec2i = Vector2i;
 
-using Vector3f = Vector3<Float>;
-using Vec3f = Vector3<Float>;
+using Vector3f = Vector3<float>;
+using Vec3f = Vector3<float>;
 using Vector3i = Vector3<int>;
 using Vec3i = Vector3i;
 
 // Useful Constants
-static constexpr Float Pi = 3.14159265358979323846;
-static constexpr Float InvPi = 0.31830988618379067154;
-static constexpr Float Inv2Pi = 0.15915494309189533577;
-static constexpr Float Inv4Pi = 0.07957747154594766788;
-static constexpr Float PiOver2 = 1.57079632679489661923;
-static constexpr Float PiOver4 = 0.78539816339744830961;
-static constexpr Float Sqrt2 = 1.41421356237309504880;
+static constexpr float Pi = 3.14159265358979323846f;
+static constexpr float InvPi = 0.31830988618379067154f;
+static constexpr float Inv2Pi = 0.15915494309189533577f;
+static constexpr float Inv4Pi = 0.07957747154594766788f;
+static constexpr float PiOver2 = 1.57079632679489661923f;
+static constexpr float PiOver4 = 0.78539816339744830961f;
+static constexpr float Sqrt2 = 1.41421356237309504880f;
 
 #ifndef NDEBUG
 
@@ -80,35 +72,35 @@ static constexpr Float Sqrt2 = 1.41421356237309504880;
 // Utility Functions
 namespace Utils
 {
-	//// returns a Float within [0, 1)
-	//inline Float RandomFloat()
+	//// returns a float within [0, 1)
+	//inline float Randomfloat()
 	//{
-	//	return (Float)std::random_device{}() / ((unsigned long long)std::numeric_limits<unsigned>::max() + 1);
+	//	return (float)std::random_device{}() / ((unsigned long long)std::numeric_limits<unsigned>::max() + 1);
 	//}
 
 	// using this pseudorandom generator for speeds sake
-	inline Float RandomFloat()
+	inline float Randomfloat()
 	{
 		// seed the engine using a guaranteed random uint32_t
 		// when multithreading use thread_local or else all cores will try to use one instance and will impair speed
 		static thread_local std::default_random_engine eng(std::random_device{}());
-		static std::uniform_real_distribution<Float> dis(0.0, 1.0);
+		static std::uniform_real_distribution<float> dis(0.0, 1.0);
 		return dis(eng);
 	}
 
-	//// returns a Float within [low, high)
-	//inline Float Random(Float low, Float high)
+	//// returns a float within [low, high)
+	//inline float Random(float low, float high)
 	//{
-	//	return low + ((Float)std::random_device{}() / std::numeric_limits<unsigned>::max() + 1) * (high - low);
+	//	return low + ((float)std::random_device{}() / std::numeric_limits<unsigned>::max() + 1) * (high - low);
 	//}
 
 	// using this pseudorandom generator for speeds sake
-	inline Float Random(Float low, Float high)
+	inline float Random(float low, float high)
 	{
 		// seed the engine using a guaranteed random uint32_t
 		// when multithreading use thread_local or else all cores will try to use one instance and will impair speed
 		static thread_local std::default_random_engine eng(std::random_device{}());
-		static std::uniform_real_distribution<Float> dis(low, high);
+		static std::uniform_real_distribution<float> dis(low, high);
 		return dis(eng);
 	}
 
@@ -135,19 +127,19 @@ namespace Utils
 	}
 
 	//template <>
-	inline Float Mod(Float a, Float b) {
+	inline float Mod(float a, float b) {
 		return std::fmod(a, b);
 	}
 
-	inline Float Radians(Float deg) {
+	inline float Radians(float deg) {
 		return (Pi / 180) * deg;
 	}
-	inline Float Degrees(Float rad) {
+	inline float Degrees(float rad) {
 		return (180 / Pi) * rad;
 	}
 
-	inline Float Log2(Float x) {
-		constexpr Float invLog2 = 1.442695040888963387004650940071;
+	inline float Log2(float x) {
+		constexpr float invLog2 = 1.442695040888963387004650940071f;
 		return std::log(x) * invLog2;
 	}
 

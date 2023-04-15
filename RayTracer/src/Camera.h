@@ -17,19 +17,19 @@ public:
 		Vec3f focal_length = { 0.0, 0.0, 1.0 };
 
 		m_Origin = origin;
-		m_Horizontal = Vec3f(Float(m_ViewportWidth), 0.0, 0.0);
-		m_Vertical = Vec3f(0.0, Float(m_ViewportHeight), 0.0);
+		m_Horizontal = Vec3f(float(m_ViewportWidth), 0.0, 0.0);
+		m_Vertical = Vec3f(0.0, float(m_ViewportHeight), 0.0);
 		m_LowerLeftCorner = m_Origin - m_Horizontal / 2 - m_Vertical / 2 - focal_length;
 	}
 
-	Vector3<Float> CalculateRayDirection(Vector2<Float>&& coord) const {
+	Vector3<float> CalculateRayDirection(Vector2<float>&& coord) const {
 		return m_LowerLeftCorner + coord.x * m_Horizontal + coord.y * m_Vertical - m_Origin;
 	}
 
-	Vector3<Float> GetOrigin() const { return m_Origin; }
-	Vector3<Float> GetHorizontal() const { return m_Horizontal; }
-	Vector3<Float> GetVertical() const { return m_Vertical; }
-	Vector3<Float> GetLowerLeftCorner() const { return m_LowerLeftCorner; }
+	Vector3<float> GetOrigin() const { return m_Origin; }
+	Vector3<float> GetHorizontal() const { return m_Horizontal; }
+	Vector3<float> GetVertical() const { return m_Vertical; }
+	Vector3<float> GetLowerLeftCorner() const { return m_LowerLeftCorner; }
 private:
 	int m_Width;
 	int m_Height;
