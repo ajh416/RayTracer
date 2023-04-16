@@ -1,6 +1,6 @@
 # CPU RayTracer made by [ah416](https://github.com/ah416)
 
-## Currently supports spheres and boxes as the only shapes, with support for triangle meshes in the works.
+## Currently supports spheres and planes as the only shapes, with support for triangle meshes in the works.
 
 ### Inspired by [RaytracingInOneWeekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html), [PBRT](https://pbr-book.org/), and [TheCherno](https://youtube.com/TheCherno) RayTracing series.
 

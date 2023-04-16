@@ -20,6 +20,7 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 #if MT
 #if RT_WINDOWS
 
+	// A little bit faster than using my 8 thread version below
 	// This doesn't work on linux apparently...
 	std::for_each(std::execution::par, m_ImageVerticalIter.begin(), m_ImageVerticalIter.end(), [this](uint32_t y)
 		{ std::for_each(std::execution::par, m_ImageHorizontalIter.begin(), m_ImageHorizontalIter.end(), [this, y](uint32_t x)
@@ -35,19 +36,20 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 	m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color); }); });
 
 #else // RT_WINDOWS
-#define NUM_THREADS 8
+#define NUM_THREADS 6
 
 	struct ImgBlock
 	{
 		uint32_t start_w, start_h, end_w, end_h;
 	};
 	std::vector<ImgBlock> blocks;
+
 	/*
 	 * Following section from https://superkogito.github.io/blog/2020/10/01/divide_image_using_opencv.html
 	 * Adapted by ah416 for use without opencv
 	 */
 
-	 // init image dimensions
+	// init image dimensions
 	uint32_t imgWidth = this->m_Image->Width;
 	uint32_t imgHeight = this->m_Image->Height;
 
