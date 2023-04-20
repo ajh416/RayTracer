@@ -36,7 +36,7 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 	m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color); }); });
 
 #else // RT_WINDOWS
-#define NUM_THREADS 6
+#define NUM_THREADS 8
 
 	struct ImgBlock
 	{
@@ -88,7 +88,7 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 		threads[i] = std::async(
 			std::launch::async, [&](int i) {
 				uint32_t start_w = blocks[i].start_w, start_h = blocks[i].start_h, end_w = blocks[i].end_w, end_h = blocks[i].end_h;
-		printf("thread %i start: (%u, %u), end: (%u, %u)\n", start_w, start_h, end_w, end_h);
+		printf("thread %i start: (%u, %u), end: (%u, %u)\n", i, start_w, start_h, end_w, end_h);
 
 		for (int y = start_h; y < end_h; y++) {
 			for (int x = start_w; x < end_w; x++) {
@@ -164,7 +164,7 @@ Vec3f Renderer::PerPixel(const Vec2f&& coord)
 		// auto v = float(coord.y) / (m_Image->Height - 1);
 		Ray<float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({ u, v }));
 
-		float multiplier = 1.0;
+		//float multiplier = 1.0;
 
 		for (int i = 0; i < m_Settings.NumberOfBounces + 1; i++)
 		{
@@ -196,7 +196,7 @@ Vec3f Renderer::PerPixel(const Vec2f&& coord)
 			//res += Utils::Clamp(shape_color * multiplier, Vec3f(0.0), Vec3f(1.0));
 			//bounce_res += Utils::Clamp(shape_color * multiplier, Vec3f(0.0), Vec3f(1.0));
 
-			multiplier *= 0.5;
+			//multiplier *= 0.7;
 
 			r.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
 			r.Direction = Reflect(r.Direction, payload.WorldNormal + material.Roughness * Utils::RandomVector(-0.5, 0.5));

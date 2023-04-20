@@ -10,6 +10,7 @@ public:
 
 	virtual bool Hit(const Ray<float>& r, float tMin, float tMax, float& hitDistance) const override
 	{
+		// Using equation sqrLength(r.Origin + r.Direction * distance) = radius^2
 		Vec3f oc = r.Origin - Position; // origin of ray - origin of sphere
 		auto a = Dot(r.Direction, r.Direction); // square the direction
 		auto b = 2.0f * Dot(oc, r.Direction);
@@ -25,6 +26,9 @@ public:
 			//Vec3f h1 = r.At(t1);
 			//if (h0 > h1) std::swap(h0, h1);
 
+			if (t0 < 0)
+				return false;
+			
 			hitDistance = t0;
 
 			return true;

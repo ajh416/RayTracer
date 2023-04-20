@@ -213,7 +213,7 @@ constexpr inline Vector3<T> Cross(const Vector3<T>& v1, const Vector3<T>& v2) {
 }
 
 template <typename T>
-constexpr inline Vector3<T> Normalize(const Vector3<T>& v) { return v / v.Length(); }
+constexpr inline Vector3<T> Normalize(const Vector3<T>& v) { return v * (1 / v.Length()); }
 
 template <typename T>
 inline Vector3<T> Normalize(const Vector3<T>&& v) { return v / v.Length(); }
