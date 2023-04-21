@@ -18,6 +18,7 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 #define MT 1
 
 #if MT
+#undef RT_WINDOWS
 #if RT_WINDOWS
 
 	// A little bit faster than using my 8 thread version below
@@ -102,6 +103,7 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 				m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
 			}
 		}
+		printf("thread %i finished\n", i);
 	}, i);
 	}
 

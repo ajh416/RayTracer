@@ -3,12 +3,15 @@
 #include "RayTracer.h"
 
 #include "Vector.h"
+#include "Shape.h"
 
-class Triangle {
+class Triangle : public Shape {
 public:
-	Triangle(Vec3f verts[3]);
-	Triangle(const Vec3f& point1, const Vec3f& point2, const Vec3f& point3);
+	Triangle(Vec3f verts[3], int material_index = 0);
+	Triangle(const Vec3f& point1, const Vec3f& point2, const Vec3f& point3, int material_index = 0);
 
 	Vec3f Vertices[3];
 	Vec3f Normal;
+
+	bool Hit(const Ray<float>& r, float tMin, float tMax, float& hitDistance) const override;
 };

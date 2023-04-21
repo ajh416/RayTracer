@@ -205,8 +205,8 @@ constexpr inline T AbsDot(const Vector3<T>& v1, const Vector3<T>& v2) {
 
 template <typename T>
 constexpr inline Vector3<T> Cross(const Vector3<T>& v1, const Vector3<T>& v2) {
-	double v1x = v1.x, v1y = v1.y, v1z = v1.z;
-	double v2x = v2.x, v2y = v2.y, v2z = v2.z;
+	float v1x = v1.x, v1y = v1.y, v1z = v1.z;
+	float v2x = v2.x, v2y = v2.y, v2z = v2.z;
 	return Vector3<T>((v1y * v2z) - (v1z * v2y),
 		(v1z * v2x) - (v1x * v2z),
 		(v1x * v2y) - (v1y * v2x));

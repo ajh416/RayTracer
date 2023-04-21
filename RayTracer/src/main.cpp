@@ -18,7 +18,7 @@ int main()
 
 	Logger::Init();
 
-	constexpr int image_width = 1080;
+	constexpr int image_width = 3840;
 	constexpr float aspect_ratio = 16.0f / 9.0f;
 	constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
 
@@ -29,7 +29,7 @@ int main()
 
 	// Create image scene and camera
 	Image img(image_width, image_height, 4);
-	Camera cam(image_width, aspect_ratio, { 0, 2, 3 });
+	Camera cam(image_width, aspect_ratio, { 0, 1.25, 0 });
 	Scene scene;
 	
 	// ====================================================================
@@ -37,7 +37,7 @@ int main()
 	// From RaytracingInOneWeekend, we use a right-handed coordinate system
 	// ====================================================================
 
-	scene.Shapes.push_back(new Sphere({ -3.0f, 7.0f, -10.0f }, 5.0f, 0));
+	//scene.Shapes.push_back(new Sphere({ -3.0f, 7.0f, -10.0f }, 5.0f, 0));
 
 	scene.Shapes.push_back(new Sphere({ 3.0f, 2.0f, -1.0f }, 1.0f, 1));
 
@@ -46,6 +46,8 @@ int main()
 	scene.Shapes.push_back(new Plane({ 0.0f, -1.0f, -10.0f }, { 0.0f, 0.0f, -1.0f }, 3));
 
 	scene.Shapes.push_back(new Plane({ 0.0f, 4.0f, 10.0f }, { 0.0f, 0.0f, 1.0f }, 3));
+
+	scene.Shapes.push_back(new Triangle({ Vec3f(-1.0f, 1.0f, -1.0f), Vec3f(1.0f, 1.0f, -1.0f), Vec3f(0, 2, -1) }));
 
 	// Vector of materials accessed using indices
 	scene.Materials.push_back(Material(
