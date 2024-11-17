@@ -1,4 +1,4 @@
-# CPU RayTracer made by [ah416](https://github.com/ah416)
+# CPU RayTracer made by [ajh416](https://github.com/ajh416)
 
 ## Currently supports spheres and planes as the only shapes, with support for triangle meshes in the works.
 
