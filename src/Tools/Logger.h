@@ -73,7 +73,7 @@ private:
 		> {};
 
 	template<typename... Args>
-	constexpr inline std::string IsText(Args&&... text)
+	inline std::string IsText(Args&&... text)
 	{
 		std::stringstream ss;
 

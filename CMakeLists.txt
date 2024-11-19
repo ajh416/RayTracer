@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.5)
 
 project(RayTracer VERSION 0.1
 	DESCRIPTION "CPU Ray Tracer"
         LANGUAGES CXX)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Set the source directory
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -12,7 +14,7 @@ file(GLOB_RECURSE SOURCES "${SRC_DIR}/**.cpp" "${SRC_DIR}/**.h")
 
 add_executable(RayTracer ${SOURCES} libs/stb_image/stb_image_write.h libs/stb_image/stb_image.h)
 
-target_include_directories(RayTracer PRIVATE src libs)
+target_include_directories(RayTracer PRIVATE src/ libs/)
 target_compile_features(RayTracer PRIVATE cxx_std_20)
 
 if (WIN32)

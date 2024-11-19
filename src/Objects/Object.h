@@ -23,10 +23,10 @@ struct Material
 	float EmissionStrength = 0.0;
 };
 
-class Shape
+class Object
 {
 public:
-	Shape(const Vec3f& origin, int material_index) : Origin(origin), MaterialIndex(material_index) {}
+	Object(const Vec3f& origin, int material_index) : Origin(origin), MaterialIndex(material_index) {}
 
 	virtual bool Hit(const Ray<float>& r, float tMin, float tMax, float& hitDistance) const = 0;
 

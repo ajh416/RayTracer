@@ -18,7 +18,6 @@ void Renderer::Render(const Scene& scene, const Camera& cam)
 #define MT 1
 
 #if MT
-#undef RT_WINDOWS
 #if RT_WINDOWS
 
 	// A little bit faster than using my 8 thread version below
@@ -182,21 +181,21 @@ Vec3f Renderer::PerPixel(const Vec2f&& coord)
 				break;
 			}
 
-			const Shape* shape = m_Scene->Shapes[payload.ObjectIndex];
-			const Material& material = m_Scene->Materials[shape->MaterialIndex];
+			const Object* Object = m_Scene->Objects[payload.ObjectIndex];
+			const Material& material = m_Scene->Materials[Object->MaterialIndex];
 
 			//Vec3f light_dir = Normalize(Vec3f(0, 1, -1));
 			//float light_intensity = Utils::Max(Dot(payload.WorldNormal, -light_dir), 0.0f); // == cos(angle)
 
-			//Vec3f shape_color = material.Albedo;
+			//Vec3f Object_color = material.Albedo;
 			Vec3f emitted_light = material.EmissionColor * material.EmissionStrength;
 			bounce_res += emitted_light * ray_color;
 			ray_color = ray_color * material.Albedo;
 
-			//shape_color *= light_intensity;
+			//Object_color *= light_intensity;
 
-			//res += Utils::Clamp(shape_color * multiplier, Vec3f(0.0), Vec3f(1.0));
-			//bounce_res += Utils::Clamp(shape_color * multiplier, Vec3f(0.0), Vec3f(1.0));
+			//res += Utils::Clamp(Object_color * multiplier, Vec3f(0.0), Vec3f(1.0));
+			//bounce_res += Utils::Clamp(Object_color * multiplier, Vec3f(0.0), Vec3f(1.0));
 
 			//multiplier *= 0.7;
 
@@ -216,11 +215,11 @@ HitPayload Renderer::TraceRay(const Ray<float>& ray)
 	int objectIndex = -1;
 	float hitDistance = std::numeric_limits<float>::max();
 
-	for (int i = 0; i < m_Scene->Shapes.size(); i++) {
-		const Shape* shape = m_Scene->Shapes[i];
+	for (int i = 0; i < m_Scene->Objects.size(); i++) {
+		const Object* Object = m_Scene->Objects[i];
 		float newDistance = 0;
 
-		if (shape->Hit(ray, 0, hitDistance, newDistance)) {
+		if (Object->Hit(ray, 0, hitDistance, newDistance)) {
 			if (newDistance > 0.0 && newDistance < hitDistance) {
 				hitDistance = newDistance;
 				objectIndex = i;
@@ -240,12 +239,12 @@ constexpr HitPayload Renderer::ClosestHit(const Ray<float>& ray, float hitDistan
 	payload.HitDistance = hitDistance;
 	payload.ObjectIndex = objectIndex;
 
-	const Shape* closestShape = m_Scene->Shapes[objectIndex];
+	const Object* closestObject = m_Scene->Objects[objectIndex];
 
-	Vec3f origin = ray.Origin - closestShape->Origin;
+	Vec3f origin = ray.Origin - closestObject->Origin;
 	payload.WorldPosition = origin + hitDistance * ray.Direction;
 	payload.WorldNormal = Normalize(payload.WorldPosition);
-	payload.WorldPosition += closestShape->Origin;
+	payload.WorldPosition += closestObject->Origin;
 
 	return payload;
 }

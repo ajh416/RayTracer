@@ -1,6 +1,6 @@
 #include "Triangle.h"
 
-Triangle::Triangle(Vec3f v[3], int material_index) : Shape(Vec3f(1.0f), material_index) {
+Triangle::Triangle(Vec3f v[3], int material_index) : Object(Vec3f(1.0f), material_index) {
 	for (int i = 0; i < 3; i++) {
 		Vertices[i] = v[i];
 	}
@@ -11,7 +11,7 @@ Triangle::Triangle(Vec3f v[3], int material_index) : Shape(Vec3f(1.0f), material
 	Normal = Normalize(C);
 }
 
-Triangle::Triangle(const Vec3f& point1, const Vec3f& point2, const Vec3f& point3, int material_index) : Shape(Vec3f(1.0f), material_index) {
+Triangle::Triangle(const Vec3f& point1, const Vec3f& point2, const Vec3f& point3, int material_index) : Object(Vec3f(1.0f), material_index) {
 	Vertices[0] = point1;
 	Vertices[1] = point2;
 	Vertices[2] = point3;

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "RayTracer.h"
-#include "Shape.h"
+#include "Object.h"
 
-class Sphere : public Shape
+class Sphere : public Object
 {
 public:
 	Sphere(Vec3f position = { 0 }, float radius = 0.5, int material_index = 0) : Shape(position, material_index), Position(position), Radius(radius) {}

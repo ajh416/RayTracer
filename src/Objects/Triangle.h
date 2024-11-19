@@ -3,9 +3,9 @@
 #include "RayTracer.h"
 
 #include "Vector.h"
-#include "Shape.h"
+#include "Object.h"
 
-class Triangle : public Shape {
+class Triangle : public Object {
 public:
 	Triangle(Vec3f verts[3], int material_index = 0);
 	Triangle(const Vec3f& point1, const Vec3f& point2, const Vec3f& point3, int material_index = 0);

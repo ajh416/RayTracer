@@ -2,9 +2,9 @@
 
 #include "RayTracer.h"
 
-#include "Shape.h"
+#include "Object.h"
 
-class Plane : public Shape {
+class Plane : public Object {
 public:
 	Plane(const Vec3f& point, const Vec3f& normal, int material_index = 0);
 

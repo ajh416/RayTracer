@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RayTracer.h"
-#include "Shapes/Shape.h"
+#include "Objects/Object.h"
 #include "Vector.h"
 
 #include <vector>
@@ -9,9 +9,9 @@
 struct Scene
 {
 	~Scene() {
-		for (auto* shape : Shapes) { delete shape; }
+		for (auto* object : Objects) { delete object; }
 	}
 
-	std::vector<Shape*> Shapes;
+	std::vector<Object*> Objects;
 	std::vector<Material> Materials;
 };

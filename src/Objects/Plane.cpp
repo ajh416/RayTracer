@@ -1,6 +1,6 @@
 #include "Plane.h"
 
-Plane::Plane(const Vec3f& point, const Vec3f& normal, int material_index) : Shape(point, material_index)
+Plane::Plane(const Vec3f& point, const Vec3f& normal, int material_index) : Object(point, material_index)
 {
     m_PointOnPlane = point;
     m_Normal = normal;

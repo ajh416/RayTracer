@@ -2,15 +2,13 @@
 
 #include "ImageWriter.h"
 #include "Renderer.h"
-#include "Ray.h"
-#include "Vector.h"
 #include "Scene.h"
-#include "Shapes/Sphere.h"
-#include "Shapes/Box.h"
-#include "Shapes/Plane.h"
-#include "Shapes/Triangle.h"
+#include "Objects/Sphere.h"
+#include "Objects/Box.h"
+#include "Objects/Plane.h"
+#include "Objects/Triangle.h"
 
-// TODO: TRIANGLES AND TRIANGLE MESHES
+// TODO: TRIANGLE MESHES AND PERHAPS GPU
 
 int main()
 {
@@ -18,7 +16,7 @@ int main()
 
 	Logger::Init();
 
-	constexpr int image_width = 3840;
+	constexpr int image_width = 1920;
 	constexpr float aspect_ratio = 16.0f / 9.0f;
 	constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
 
@@ -33,21 +31,23 @@ int main()
 	Scene scene;
 	
 	// ====================================================================
-	// For shapes, Z must be negative to be "seen" by the camera
+	// For Objects, Z must be negative to be "seen" by the camera
 	// From RaytracingInOneWeekend, we use a right-handed coordinate system
 	// ====================================================================
 
-	//scene.Shapes.push_back(new Sphere({ -3.0f, 7.0f, -10.0f }, 5.0f, 0));
+	//scene.Objects.push_back(new Sphere({ -3.0f, 7.0f, -10.0f }, 5.0f, 0));
 
-	scene.Shapes.push_back(new Sphere({ 3.0f, 2.0f, -1.0f }, 1.0f, 1));
+	scene.Objects.push_back(new Sphere({ 3.0f, 2.0f, -1.0f }, 1.0f, 1));
 
-	scene.Shapes.push_back(new Sphere({ 0.0f, -19.0f, -1.0f }, 20.0f, 2));
+	scene.Objects.push_back(new Sphere({ 0.0f, -19.0f, -1.0f }, 20.0f, 2));
 
-	scene.Shapes.push_back(new Plane({ 0.0f, -1.0f, -10.0f }, { 0.0f, 0.0f, -1.0f }, 3));
+	scene.Objects.push_back(new Plane({ 0.0f, -1.0f, -10.0f }, { 0.0f, 0.0f, -1.0f }, 3));
 
-	scene.Shapes.push_back(new Plane({ 0.0f, 4.0f, 10.0f }, { 0.0f, 0.0f, 1.0f }, 3));
+	scene.Objects.push_back(new Plane({ 0.0f, 4.0f, 10.0f }, { 0.0f, 0.0f, 1.0f }, 3));
 
-	scene.Shapes.push_back(new Triangle({ Vec3f(-1.0f, 1.0f, -1.0f), Vec3f(1.0f, 1.0f, -1.0f), Vec3f(0, 2, -1) }));
+	scene.Objects.push_back(new Triangle({ Vec3f(-1.0f, 1.0f, -1.0f), Vec3f(1.0f, 1.0f, -1.0f), Vec3f(0, 2, -1) }));
+
+	scene.Objects.push_back(new Box({{ 2.0f, 1.0f, -1.0f }, { 3.0f, 2.0f, -2.0f }}, 0));
 
 	// Vector of materials accessed using indices
 	scene.Materials.push_back(Material(
