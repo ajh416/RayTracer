@@ -50,6 +50,7 @@ int main()
 	scene.Objects.push_back(new Box({{ 2.0f, 1.0f, -1.0f }, { 3.0f, 2.0f, -2.0f }}, 0));
 
 	// Vector of materials accessed using indices
+	// look at this fancy syntax!
 	scene.Materials.push_back(Material(
 		{ 
 			.Albedo = {0.0f, 0.0f, 0.0f},

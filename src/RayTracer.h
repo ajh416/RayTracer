@@ -60,14 +60,14 @@ static constexpr float Sqrt2 = 1.41421356237309504880f;
 #else
 #define PROFILE_FUNCTION() Timer t##__LINE__(__func__);
 #define PROFILE_SCOPE(name) Timer t##__LINE__(#name);
-#endif
+#endif // _WIN32
 
-#else
+#else // NDEBUG
 
 #define PROFILE_FUNCTION()
 #define PROFILE_SCOPE()
 
-#endif
+#endif // NDEBUG
 
 // Utility Functions
 namespace Utils
@@ -82,7 +82,7 @@ namespace Utils
 	inline float Randomfloat()
 	{
 		// seed the engine using a guaranteed random uint32_t
-		// when multithreading use thread_local or else all cores will try to use one instance and will impair speed
+		// when multithreading use thread_local or else all cores will try to use one instance and will heavily impair speed
 		static thread_local std::default_random_engine eng(std::random_device{}());
 		static std::uniform_real_distribution<float> dis(0.0, 1.0);
 		return dis(eng);
