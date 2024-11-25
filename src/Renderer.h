@@ -4,7 +4,6 @@
 
 #include "Image.h"
 #include "Camera.h"
-#include "Vector.h"
 #include "Scene.h"
 
 struct RenderSettings
