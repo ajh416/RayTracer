@@ -7,16 +7,11 @@ public:
         ~Window();
         void Update();
         bool ShouldClose();
-        void SetKeyCallback(GLFWkeyfun callback);
-        void SetMouseButtonCallback(GLFWmousebuttonfun callback);
-        void SetCursorPosCallback(GLFWcursorposfun callback);
-        void SetScrollCallback(GLFWscrollfun callback);
+	void BeginImGui();
+	void EndImGui();
         GLFWwindow *GetWindow();
         int GetWidth();
         int GetHeight();
-
-private:
-	void RenderImGui();
 
 private:
 	GLFWwindow *window;

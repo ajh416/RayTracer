@@ -9,6 +9,7 @@
 #include "Scene.h"
 
 #include "OpenGL/Window.h"
+#include <imgui.h>
 
 // TODO: TRIANGLE MESHES AND PERHAPS GPU
 
@@ -17,8 +18,6 @@ int main() {
 
         Logger::Init();
 
-	Window window(1280, 720, "RayTracer");
-
         constexpr int image_width = 480;
         constexpr float aspect_ratio = 16.0f / 9.0f;
         constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
@@ -26,7 +25,7 @@ int main() {
         Renderer renderer;
 
         // Setting accumulate to true enables path tracing, which takes much longer to complete
-        renderer.SetSettings({.NumberOfSamples = 1, .NumberOfBounces = 10, .Accumulate = true, .AccumulateMax = 25});
+        renderer.SetSettings({.NumberOfSamples = 1, .NumberOfBounces = 5, .Accumulate = true, .AccumulateMax = 10});
 
         // Create image scene and camera
         Image img(image_width, image_height, 4);
@@ -66,7 +65,24 @@ int main() {
         renderer.SetImage(img);
         renderer.Render(scene, cam);
 
-	window.Update();
+        Window window(1280, 720, "RayTracer");
+
+        while (!window.ShouldClose()) {
+                glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+
+                window.BeginImGui();
+                ImGui::Begin("Settings");
+                static int samples = 1;
+                ImGui::SliderInt("Samples", &samples, 1, 100);
+                renderer.SetSettings(
+                    {.NumberOfSamples = samples, .NumberOfBounces = 10, .Accumulate = true, .AccumulateMax = 25});
+                ImGui::End();
+                ImGui::Begin("Image");
+                ImGui::Image((uintptr_t)img.GetTexture(), ImVec2(1280, 720));
+                window.EndImGui();
+                window.Update();
+        }
 
         ASSERT(ImageWriter::Write(img), "Image write failed!")
 }
