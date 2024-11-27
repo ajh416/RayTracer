@@ -64,41 +64,45 @@ int main() {
         scene.Materials.push_back(Material({{0.6f, 0.6f, 0.6f}, 0.1f, 0.0f, Vec3f(0.3f, 0.3f, 0.3f), 1.0f}));
 
         renderer.SetImage(img);
-	renderer.Render(scene, cam);
+        renderer.Render(scene, cam);
 
-	bool end = false;
-
-        auto lambda = [&]() {
-                Window window(1280, 720, "RayTracer");
-        	Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
-                while (!window.ShouldClose()) {
-                        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-                        glClear(GL_COLOR_BUFFER_BIT);
-
-                        window.BeginImGui();
-                        ImGui::Begin("Settings");
-                        static int samples = 1;
-                        ImGui::SliderInt("Samples", &samples, 1, 100);
-                        renderer.SetSettings(
-                            {.NumberOfSamples = samples, .NumberOfBounces = 10, .Accumulate = true, .AccumulateMax = 25});
-                        ImGui::End();
-                        ImGui::Begin("Image");
-                        ImGui::Image((uintptr_t)tex.GetRendererID(), ImVec2(img.Width, img.Height), ImVec2(0, 1), ImVec2(1, 0));
-                        ImGui::End();
-                        window.EndImGui();
-                        window.Update();
-                }
-		end = true;
-                return;
-        };
-
+        bool end = false;
+        Window window(1280, 720, "RayTracer");
+        Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
+	auto lambda = [&]() {
+		while (!end) {
+			renderer.Render(scene, cam);
+			tex.SetData((uint8_t *)img.Data);
+		}
+	};
         std::thread t(lambda);
 
-        while (!end) {
-                renderer.SetImage(img);
-                renderer.Render(scene, cam);
-		//tex.SetData((uint8_t*)img.Data);
+        while (!window.ShouldClose()) {
+                glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+
+                window.BeginImGui();
+                ImGui::Begin("Settings");
+                static int samples = 1;
+                ImGui::SliderInt("Samples", &samples, 1, 100);
+                static int bounces = 5;
+                ImGui::SliderInt("Bounces", &bounces, 1, 100);
+                static bool accumulate = true;
+                ImGui::Checkbox("Accumulate", &accumulate);
+                static int accumulateMax = 10;
+                ImGui::SliderInt("Accumulate Max", &accumulateMax, 1, 100);
+                renderer.SetSettings({.NumberOfSamples = samples,
+                                      .NumberOfBounces = bounces,
+                                      .Accumulate = accumulate,
+                                      .AccumulateMax = accumulateMax});
+                ImGui::End();
+                ImGui::Begin("Image");
+                ImGui::Image((uintptr_t)tex.GetRendererID(), ImVec2(img.Width, img.Height), ImVec2(0, 1), ImVec2(1, 0));
+                ImGui::End();
+                window.EndImGui();
+                window.Update();
         }
+        end = true;
 
         ASSERT(ImageWriter::Write(img), "Image write failed!")
 }
