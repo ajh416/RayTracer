@@ -8,14 +8,15 @@
 #include "Renderer.h"
 #include "Scene.h"
 
+#include "OpenGL/Texture.h"
 #include "OpenGL/Window.h"
 #include <imgui.h>
+
+#include <thread>
 
 // TODO: TRIANGLE MESHES AND PERHAPS GPU
 
 int main() {
-        PROFILE_FUNCTION();
-
         Logger::Init();
 
         constexpr int image_width = 480;
@@ -63,25 +64,40 @@ int main() {
         scene.Materials.push_back(Material({{0.6f, 0.6f, 0.6f}, 0.1f, 0.0f, Vec3f(0.3f, 0.3f, 0.3f), 1.0f}));
 
         renderer.SetImage(img);
-        renderer.Render(scene, cam);
+	renderer.Render(scene, cam);
 
-        Window window(1280, 720, "RayTracer");
+	bool end = false;
 
-        while (!window.ShouldClose()) {
-                glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
+        auto lambda = [&]() {
+                Window window(1280, 720, "RayTracer");
+        	Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
+                while (!window.ShouldClose()) {
+                        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+                        glClear(GL_COLOR_BUFFER_BIT);
 
-                window.BeginImGui();
-                ImGui::Begin("Settings");
-                static int samples = 1;
-                ImGui::SliderInt("Samples", &samples, 1, 100);
-                renderer.SetSettings(
-                    {.NumberOfSamples = samples, .NumberOfBounces = 10, .Accumulate = true, .AccumulateMax = 25});
-                ImGui::End();
-                ImGui::Begin("Image");
-                ImGui::Image((uintptr_t)img.GetTexture(), ImVec2(1280, 720));
-                window.EndImGui();
-                window.Update();
+                        window.BeginImGui();
+                        ImGui::Begin("Settings");
+                        static int samples = 1;
+                        ImGui::SliderInt("Samples", &samples, 1, 100);
+                        renderer.SetSettings(
+                            {.NumberOfSamples = samples, .NumberOfBounces = 10, .Accumulate = true, .AccumulateMax = 25});
+                        ImGui::End();
+                        ImGui::Begin("Image");
+                        ImGui::Image((uintptr_t)tex.GetRendererID(), ImVec2(img.Width, img.Height), ImVec2(0, 1), ImVec2(1, 0));
+                        ImGui::End();
+                        window.EndImGui();
+                        window.Update();
+                }
+		end = true;
+                return;
+        };
+
+        std::thread t(lambda);
+
+        while (!end) {
+                renderer.SetImage(img);
+                renderer.Render(scene, cam);
+		//tex.SetData((uint8_t*)img.Data);
         }
 
         ASSERT(ImageWriter::Write(img), "Image write failed!")
