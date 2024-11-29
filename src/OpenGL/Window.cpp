@@ -33,8 +33,9 @@ Window::Window(int width, int height, const char *title) {
 }
 
 Window::~Window() {
+	printf("Destroying window\n");
 	glfwDestroyWindow(window);
-	//glfwTerminate();
+	glfwTerminate();
 }
 
 void Window::Update() {

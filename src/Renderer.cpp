@@ -5,8 +5,13 @@
 
 #include <array>
 #include <future>
+#include <string.h>
 
 void Renderer::Render(const Scene &scene, const Camera &cam) {
+	// if we are rendering a second time with the same image, clear the accumulation data
+	if (m_AccumulationData)
+		memset((void*)m_AccumulationData, 0, m_Image->Width * m_Image->Height * sizeof(Vec3f));
+
         m_Camera = &cam;
         m_Scene = &scene;
 
@@ -20,7 +25,7 @@ void Renderer::Render(const Scene &scene, const Camera &cam) {
 #include <execution>
 
         // A little bit faster than using my 8 thread version below
-        // This doesn't work on linux apparently...
+        // This doesn't work on linux apparently
         std::for_each(std::execution::par, m_ImageVerticalIter.begin(), m_ImageVerticalIter.end(), [this](uint32_t y) {
                 std::for_each(std::execution::par, m_ImageHorizontalIter.begin(), m_ImageHorizontalIter.end(),
                               [this, y](uint32_t x) {
@@ -46,7 +51,7 @@ void Renderer::Render(const Scene &scene, const Camera &cam) {
         /*
          * Following section from
          * https://superkogito.github.io/blog/2020/10/01/divide_image_using_opencv.html
-         * Adapted by ah416 for use without opencv
+         * Adapted by ajh416 for use without opencv
          */
 
         // init image dimensions

@@ -16,6 +16,8 @@ file(GLOB_RECURSE SOURCES "${SRC_DIR}/**.cpp" "${SRC_DIR}/**.h")
 add_subdirectory(libs/glfw)
 add_subdirectory(libs/glm)
 
+SET(GLFW_BUILD_X11 ON CACHE BOOL "Build for X11")
+
 # Don't let glfw build examples/tests/docs or install
 SET(GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW lib only")
 SET(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "GLFW lib only")
