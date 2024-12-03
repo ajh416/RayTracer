@@ -13,6 +13,9 @@
 
 #include <imgui.h>
 
+#include <thread>
+#include <future>
+
 // TODO: TRIANGLE MESHES AND PERHAPS GPU
 
 int main() {
@@ -70,12 +73,18 @@ int main() {
 	Window window(1280, 720, "RayTracer");
 	Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
 
+	auto lambda = [&]() {
+		while (!end) {
+			renderer.Render(scene, cam);
+			tex.SetData((uint8_t*)img.Data);
+		}
+	};
+	auto val = std::async(std::launch::async, lambda);
+
 	while (!window.ShouldClose()) {
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		renderer.Render(scene, cam);
-		tex.SetData((uint8_t*)img.Data);
 		window.BeginImGui();
 		ImGui::Begin("Settings");
 		static int samples = 1;
@@ -99,6 +108,8 @@ int main() {
 		window.EndImGui();
 		window.Update();
 	}
+	end = true;
+	val.wait();
 
 	ASSERT(ImageWriter::Write(img), "Image write failed!")
 }
