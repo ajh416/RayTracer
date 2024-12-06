@@ -21,7 +21,7 @@
 int main() {
 	Logger::Init();
 
-	constexpr int image_width = 480;
+	constexpr int image_width = 720;
 	constexpr float aspect_ratio = 16.0f / 9.0f;
 	constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
 
@@ -73,10 +73,11 @@ int main() {
 	Window window(1280, 720, "RayTracer");
 	Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
 
+	bool newImage = false;
 	auto lambda = [&]() {
 		while (!end) {
 			renderer.Render(scene, cam);
-			tex.SetData((uint8_t*)img.Data);
+			newImage = true;
 		}
 	};
 	auto val = std::async(std::launch::async, lambda);
@@ -84,6 +85,11 @@ int main() {
 	while (!window.ShouldClose()) {
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		if (newImage) {
+			tex.SetData((uint8_t*)img.Data);
+			newImage = false;
+		}
 
 		window.BeginImGui();
 		ImGui::Begin("Settings");
