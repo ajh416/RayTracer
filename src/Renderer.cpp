@@ -5,18 +5,10 @@
 
 #include <array>
 #include <future>
-#include <string.h>
 
 void Renderer::Render(const Scene &scene, const Camera &cam) {
-	// if we are rendering a second time with the same image, clear the accumulation data
-	if (m_AccumulationData)
-		memset((void*)m_AccumulationData, 0, m_Image->Width * m_Image->Height * sizeof(Vec3f));
-
         m_Camera = &cam;
         m_Scene = &scene;
-
-        if (!m_Settings.Accumulate)
-                m_Settings.AccumulateMax = 1;
 
 #define MT 1
 
@@ -24,17 +16,15 @@ void Renderer::Render(const Scene &scene, const Camera &cam) {
 #if RT_WINDOWS
 #include <execution>
 
-        // A little bit faster than using my 8 thread version below
+        // A good bit faster than using my 8 thread version below
         // This doesn't work on linux apparently
         std::for_each(std::execution::par, m_ImageVerticalIter.begin(), m_ImageVerticalIter.end(), [this](uint32_t y) {
                 std::for_each(std::execution::par, m_ImageHorizontalIter.begin(), m_ImageHorizontalIter.end(),
                               [this, y](uint32_t x) {
-                                      for (int i = 0; i < m_Settings.AccumulateMax; i++) {
-                                              auto color = PerPixel(Vec2f((float)x, (float)y));
-                                              m_AccumulationData[x + y * m_Image->Width] += color;
-                                      }
+                                      auto color = PerPixel(Vec2f((float)x, (float)y));
+                                      m_AccumulationData[x + y * m_Image->Width] += color;
                                       auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
-                                      accumulated_color /= (float)m_Settings.AccumulateMax;
+                                      accumulated_color /= (float)m_FrameIndex;
 
                                       m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
                               });
@@ -58,8 +48,8 @@ void Renderer::Render(const Scene &scene, const Camera &cam) {
         uint32_t imgWidth = this->m_Image->Width;
         uint32_t imgHeight = this->m_Image->Height;
 
-        std::cout << "IMAGE SIZE: "
-                  << "(" << imgWidth << "," << imgHeight << ")" << std::endl;
+        // std::cout << "IMAGE SIZE: "
+        //           << "(" << imgWidth << "," << imgHeight << ")" << std::endl;
 
         // init block dimensions
         uint32_t bwSize;
@@ -97,24 +87,26 @@ void Renderer::Render(const Scene &scene, const Camera &cam) {
                     [&](int i) {
                             uint32_t start_w = blocks[i].start_w, start_h = blocks[i].start_h, end_w = blocks[i].end_w,
                                      end_h = blocks[i].end_h;
-                            printf("thread %i start: (%u, %u), end: "
-                                   "(%u, %u)\n",
-                                   i, start_w, start_h, end_w, end_h);
+                            // printf("thread %i start: (%u, %u), end: "
+                            //        "(%u, %u)\n",
+                            //        i, start_w, start_h, end_w, end_h);
 
                             for (int y = start_h; y < end_h; y++) {
                                     for (int x = start_w; x < end_w; x++) {
-                                            for (int i = 0; i < m_Settings.AccumulateMax; i++) {
-                                                    auto color = PerPixel({(float)x, (float)y});
+                                            auto color = PerPixel({(float)x, (float)y});
+                                            if (m_Settings.Accumulate) {
                                                     m_AccumulationData[x + y * this->m_Image->Width] += color;
-                                            }
-                                            auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
-                                            accumulated_color /= (float)m_Settings.AccumulateMax;
+                                                    auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
+                                                    accumulated_color /= (float)m_FrameIndex;
 
-                                            m_Image->Data[x + y * this->m_Image->Width] =
-                                                Utils::VectorToUInt32(accumulated_color);
+                                                    m_Image->Data[x + y * this->m_Image->Width] =
+                                                        Utils::VectorToUInt32(accumulated_color);
+                                                    continue;
+                                            }
+                                            m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(color);
                                     }
                             }
-                            printf("thread %i finished\n", i);
+                            // printf("thread %i finished\n", i);
                     },
                     i);
         }
@@ -142,6 +134,8 @@ void Renderer::Render(const Scene &scene, const Camera &cam) {
         }
 
 #endif // MT
+	if (m_Settings.Accumulate)
+		m_FrameIndex++;
 }
 
 void Renderer::SetImage(Image &image) {

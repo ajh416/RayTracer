@@ -22,6 +22,8 @@ public:
 		m_LowerLeftCorner = m_Origin - m_Horizontal / 2 - m_Vertical / 2 - focal_length;
 	}
 
+	void Update();
+
 	Vector3<float> CalculateRayDirection(Vector2<float>&& coord) const {
 		return m_LowerLeftCorner + coord.x * m_Horizontal + coord.y * m_Vertical - m_Origin;
 	}

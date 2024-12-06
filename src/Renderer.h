@@ -11,7 +11,6 @@ struct RenderSettings
 	int NumberOfSamples = 1;
 	int NumberOfBounces = 1;
 	bool Accumulate = true;
-	int AccumulateMax = 1;
 };
 
 class Renderer
@@ -25,6 +24,7 @@ public:
 	constexpr void SetSettings(const RenderSettings&& settings) { m_Settings = settings; }
 
 	void SetImage(Image& image);
+	void ResetFrameIndex() { m_FrameIndex = 1; }
 
 private:
 	Vec3f PerPixel(const Vec2f&& coord); // comparable to RayGen shader in GPU ray tracing
@@ -45,4 +45,6 @@ private:
 	const Scene* m_Scene = nullptr;
 
 	RenderSettings m_Settings;
+
+	uint32_t m_FrameIndex = 1;
 };
