@@ -98,6 +98,7 @@ int main() {
                 ImGui::SliderInt("Bounces", &bounces, 0, 100);
                 static bool accumulate = true;
                 ImGui::Checkbox("Accumulate", &accumulate);
+		ImGui::Text("Frame (accumulation): %d", renderer.GetFrameIndex());
                 if (ImGui::Button("Save")) {
                         renderer.SetSettings({.NumberOfSamples = samples, .NumberOfBounces = bounces, .Accumulate = accumulate});
                 }

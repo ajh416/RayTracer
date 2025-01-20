@@ -3,13 +3,21 @@
 #include "Ray.h"
 #include "Vector.h"
 
+#include <string.h>
 #include <array>
 #include <future>
 
 void Renderer::Render(const Scene &scene, const Camera &cam) {
-        m_Camera = &cam;
-        m_Scene = &scene;
-
+	// TODO: this causes segfault????
+	if (m_Camera == nullptr || m_Scene == nullptr) {
+		m_Camera = &cam;
+		m_Scene = &scene;
+	}
+	if (m_Camera->GetOrigin() != cam.GetOrigin() || m_Camera->GetLowerLeftCorner() != cam.GetLowerLeftCorner()) {
+		memset(m_AccumulationData, 0, m_Image->Width * m_Image->Height * sizeof(Vec3f));
+		ResetFrameIndex();
+	}
+	
 #define MT 1
 
 #if MT
@@ -97,7 +105,8 @@ void Renderer::Render(const Scene &scene, const Camera &cam) {
                                             if (m_Settings.Accumulate) {
                                                     m_AccumulationData[x + y * this->m_Image->Width] += color;
                                                     auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
-                                                    accumulated_color /= (float)m_FrameIndex;
+						    if (m_FrameIndex > 1)
+                                                	accumulated_color /= (float)m_FrameIndex;
 
                                                     m_Image->Data[x + y * this->m_Image->Width] =
                                                         Utils::VectorToUInt32(accumulated_color);
@@ -224,7 +233,7 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord) {
 
                         r.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
                         r.Direction =
-                            Reflect(r.Direction, payload.WorldNormal + material.Roughness * Utils::RandomVector(-0.5, 0.5));
+                            Reflect(r.Direction, payload.WorldNormal + material.Roughness * Utils::RandomVector(-0.1, 0.1));
                 }
 
                 res += Utils::Clamp(bounce_res, Vec3f(0.0f), Vec3f(1.0f));

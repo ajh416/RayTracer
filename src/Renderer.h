@@ -25,6 +25,7 @@ public:
 
 	void SetImage(Image& image);
 	void ResetFrameIndex() { m_FrameIndex = 1; }
+	uint32_t GetFrameIndex() { return m_FrameIndex; }
 
 private:
 	Vec3f PerPixel(const Vec2f&& coord); // comparable to RayGen shader in GPU ray tracing
