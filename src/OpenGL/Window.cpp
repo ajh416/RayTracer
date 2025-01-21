@@ -2,6 +2,9 @@
 
 #include <RayTracer.h>
 
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -33,7 +36,6 @@ Window::Window(int width, int height, const char *title) {
 }
 
 Window::~Window() {
-	printf("Destroying window\n");
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
@@ -62,11 +64,11 @@ GLFWwindow* Window::GetWindow() {
 	return window;
 }
 
-int Window::GetWidth() {
+int Window::GetWidth() const {
 	return width;
 }
 
-int Window::GetHeight() {
+int Window::GetHeight() const {
 	return height;
 }
 

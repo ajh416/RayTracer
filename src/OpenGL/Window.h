@@ -1,5 +1,4 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+struct GLFWwindow;
 
 class Window {
 public:
@@ -7,14 +6,14 @@ public:
         ~Window();
         void Update();
         bool ShouldClose();
-	void BeginImGui();
-	void EndImGui();
+	    void BeginImGui();
+	    void EndImGui();
         GLFWwindow *GetWindow();
-        int GetWidth();
-        int GetHeight();
+        int GetWidth() const;
+        int GetHeight() const;
 
 private:
-	GLFWwindow *window;
-	int width;
-	int height;
+	    GLFWwindow *window;
+	    int width;
+	    int height;
 };

@@ -19,13 +19,13 @@ public:
 	Renderer() = default;
 	~Renderer() { delete[] m_AccumulationData; }
 
-	void Render(const Scene& scene, const Camera& cam);
+	void Render(const Scene& scene, Camera& cam);
 
 	constexpr void SetSettings(const RenderSettings&& settings) { m_Settings = settings; }
 
 	void SetImage(Image& image);
 	void ResetFrameIndex() { m_FrameIndex = 1; }
-	uint32_t GetFrameIndex() { return m_FrameIndex; }
+	uint32_t GetFrameIndex() const { return m_FrameIndex; }
 
 private:
 	Vec3f PerPixel(const Vec2f&& coord); // comparable to RayGen shader in GPU ray tracing
@@ -42,7 +42,7 @@ private:
 	std::vector<uint32_t> m_ImageVerticalIter;
 	std::vector<uint32_t> m_ImageHorizontalIter;
 
-	const Camera* m_Camera = nullptr;
+	Camera* m_Camera = nullptr;
 	const Scene* m_Scene = nullptr;
 
 	RenderSettings m_Settings;

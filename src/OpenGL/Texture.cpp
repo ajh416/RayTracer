@@ -17,7 +17,6 @@ Texture::Texture(int width, int height, unsigned char* data) : renderer_id(0), l
 }
 
 Texture::~Texture() {
-	printf("Deleting texture\n");
 	glDeleteTextures(1, &renderer_id);
 }
 

@@ -6,16 +6,17 @@
 #include <string.h>
 #include <array>
 #include <future>
+#include <algorithm>
+#include <execution>
 
-void Renderer::Render(const Scene &scene, const Camera &cam) {
-	// TODO: this causes segfault????
+void Renderer::Render(const Scene &scene, Camera &cam) {
 	if (m_Camera == nullptr || m_Scene == nullptr) {
 		m_Camera = &cam;
 		m_Scene = &scene;
 	}
-	if (m_Camera->GetOrigin() != cam.GetOrigin() || m_Camera->GetLowerLeftCorner() != cam.GetLowerLeftCorner()) {
+
+	if (m_FrameIndex == 1) {
 		memset(m_AccumulationData, 0, m_Image->Width * m_Image->Height * sizeof(Vec3f));
-		ResetFrameIndex();
 	}
 	
 #define MT 1
@@ -26,15 +27,16 @@ void Renderer::Render(const Scene &scene, const Camera &cam) {
 
         // A good bit faster than using my 8 thread version below
         // This doesn't work on linux apparently
-        std::for_each(std::execution::par, m_ImageVerticalIter.begin(), m_ImageVerticalIter.end(), [this](uint32_t y) {
-                std::for_each(std::execution::par, m_ImageHorizontalIter.begin(), m_ImageHorizontalIter.end(),
+        // something something libtbb
+        std::for_each(std::execution::par_unseq, m_ImageVerticalIter.begin(), m_ImageVerticalIter.end(), [this](uint32_t y) {
+                std::for_each(std::execution::par_unseq, m_ImageHorizontalIter.begin(), m_ImageHorizontalIter.end(),
                               [this, y](uint32_t x) {
-                                      auto color = PerPixel(Vec2f((float)x, (float)y));
-                                      m_AccumulationData[x + y * m_Image->Width] += color;
-                                      auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
-                                      accumulated_color /= (float)m_FrameIndex;
-
-                                      m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
+                                auto color = PerPixel({ (float)x, (float)y });
+								m_AccumulationData[x + y * this->m_Image->Width] += color;
+								auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
+								accumulated_color /= (float)m_FrameIndex;
+                                accumulated_color = Utils::Clamp(accumulated_color, Vec3f(0.0f), Vec3f(1.0f));
+                                m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
                               });
         });
 
@@ -101,18 +103,12 @@ void Renderer::Render(const Scene &scene, const Camera &cam) {
 
                             for (int y = start_h; y < end_h; y++) {
                                     for (int x = start_w; x < end_w; x++) {
-                                            auto color = PerPixel({(float)x, (float)y});
-                                            if (m_Settings.Accumulate) {
-                                                    m_AccumulationData[x + y * this->m_Image->Width] += color;
-                                                    auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
-						    if (m_FrameIndex > 1)
-                                                	accumulated_color /= (float)m_FrameIndex;
-
-                                                    m_Image->Data[x + y * this->m_Image->Width] =
-                                                        Utils::VectorToUInt32(accumulated_color);
-                                                    continue;
-                                            }
-                                            m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(color);
+                                            auto color = PerPixel({ (float)x, (float)y });
+                                            m_AccumulationData[x + y * this->m_Image->Width] += color;
+                                            auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
+                                            accumulated_color /= (float)m_FrameIndex;
+                                            accumulated_color = Utils::Clamp(accumulated_color, Vec3f(0.0f), Vec3f(1.0f));
+                                            m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
                                     }
                             }
                             // printf("thread %i finished\n", i);
@@ -145,6 +141,8 @@ void Renderer::Render(const Scene &scene, const Camera &cam) {
 #endif // MT
 	if (m_Settings.Accumulate)
 		m_FrameIndex++;
+    else
+		m_FrameIndex = 1;
 }
 
 void Renderer::SetImage(Image &image) {
@@ -170,14 +168,14 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord) {
                 Vec3f bounce_res = 0.0f;
                 Vec3f ray_color = 1.0f;
 
-                float u = float(coord.x + Utils::Randomfloat()) / (m_Image->Width - 1);  // transform the x coordinate to 0 ->
+                //float u = float(coord.x + Utils::Randomfloat()) / (m_Image->Width - 1);  // transform the x coordinate to 0 ->
                                                                                          // 1 (rather than 0 -> image_width)
-                float v = float(coord.y + Utils::Randomfloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1
+                //float v = float(coord.y + Utils::Randomfloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1
                                                                                          // (rather than 0 -> image_height) auto
                                                                                          // u = float(coord.x) / (m_Image->Width
                                                                                          // - 1); auto v = float(coord.y) /
                                                                                          // (m_Image->Height - 1);
-                Ray<float> r = Ray(m_Camera->GetOrigin(), m_Camera->CalculateRayDirection({u, v}));
+                Ray<float> r = Ray(m_Camera->GetOrigin(), m_Camera->GetRayDirection({coord.x, coord.y}));
 
                 // float multiplier = 1.0;
 
@@ -233,7 +231,7 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord) {
 
                         r.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
                         r.Direction =
-                            Reflect(r.Direction, payload.WorldNormal + material.Roughness * Utils::RandomVector(-0.1, 0.1));
+                            Reflect(r.Direction, payload.WorldNormal + material.Roughness * Utils::RandomVector(-0.1f, 0.1f));
                 }
 
                 res += Utils::Clamp(bounce_res, Vec3f(0.0f), Vec3f(1.0f));
