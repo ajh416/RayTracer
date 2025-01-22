@@ -27,10 +27,10 @@ public:
 	{
 	}
 
-	constexpr Vec2f Center() const
+	constexpr glm::vec2 Center() const
 	{
-		Vec2f min = Vec2f((float)pMin.x, (float)pMin.y);
-		Vec2f max = Vec2f((float)pMax.x, (float)pMax.y);
+		glm::vec2 min = glm::vec2((float)pMin.x, (float)pMin.y);
+		glm::vec2 max = glm::vec2((float)pMax.x, (float)pMax.y);
 		auto direction = max - min;
 		return min + direction * 0.5;
 	}
@@ -61,10 +61,10 @@ public:
 	{
 	}
 
-	Vec3f Center() const
+	glm::vec3 Center() const
 	{
-		Vec3f min = Vec3f(pMin.x, pMin.y, pMin.z);
-		Vec3f max = Vec3f(pMax.x, pMax.y, pMax.z);
+		glm::vec3 min = glm::vec3(pMin.x, pMin.y, pMin.z);
+		glm::vec3 max = glm::vec3(pMax.x, pMax.y, pMax.z);
 		auto direction = max - min;
 		return min + direction * 0.5f;
 	}

@@ -28,16 +28,16 @@ public:
 	uint32_t GetFrameIndex() const { return m_FrameIndex; }
 
 private:
-	Vec3f PerPixel(const Vec2f&& coord); // comparable to RayGen shader in GPU ray tracing
+	glm::vec3 PerPixel(const glm::vec2&& coord); // comparable to RayGen shader in GPU ray tracing
 
-	HitPayload TraceRay(const Ray<float>& ray);
+	HitPayload TraceRay(const Ray& ray);
 
-	constexpr HitPayload ClosestHit(const Ray<float>& ray, float hitDistance, int objectIndex);
+	HitPayload ClosestHit(const Ray& ray, float hitDistance, int objectIndex);
 
-	constexpr HitPayload Miss(const Ray<float>& ray);
+	constexpr HitPayload Miss(const Ray& ray);
 
 	Image* m_Image = nullptr;
-	Vec3f* m_AccumulationData = nullptr;
+	glm::vec3* m_AccumulationData = nullptr;
 
 	std::vector<uint32_t> m_ImageVerticalIter;
 	std::vector<uint32_t> m_ImageHorizontalIter;

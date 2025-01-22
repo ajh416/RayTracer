@@ -261,14 +261,13 @@ namespace Utils
 		return vec;
 	}
 
-	inline Vec3f RandomVector(float low, float high)
+	inline glm::vec3 RandomVector(float low, float high)
 	{
-		return Vec3f(Utils::Random(low, high), Utils::Random(low, high), Utils::Random(low, high));
+		return glm::vec3(Utils::Random(low, high), Utils::Random(low, high), Utils::Random(low, high));
 	}
 
 	// assumes that vec is float
-	template<typename T>
-	constexpr inline Vector3<uint8_t> Vec3floatToVec3Byte(const Vector3<T>& vec)
+	constexpr inline Vector3<uint8_t> Vec3FloatToVec3Byte(glm::vec3 vec)
 	{
 		Vector3<uint8_t> newVec;
 		newVec.x = static_cast<uint8_t>(255.0 * vec.x);
@@ -277,9 +276,9 @@ namespace Utils
 		return newVec;
 	}
 
-	constexpr inline uint32_t VectorToUInt32(Vector3<float> vec)
+	constexpr inline uint32_t VectorToUInt32(glm::vec3 vec)
 	{
-		auto byte_vec = Vec3floatToVec3Byte(vec);
+		auto byte_vec = Vec3FloatToVec3Byte(vec);
 
 		return 0xff000000 | (byte_vec.z << 16) | (byte_vec.y << 8) | (byte_vec.x);
 	}

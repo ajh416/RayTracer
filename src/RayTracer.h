@@ -12,6 +12,8 @@
 
 #include "Timer.h"
 
+#include <glm/glm.hpp>
+
 template<typename T>
 class Bounds2;
 template<typename T>
@@ -27,21 +29,6 @@ class Point3;
 
 using Point2f = Point2<float>;
 using Point3f = Point3<float>;
-
-template<typename T>
-class Vector2;
-template<typename T>
-class Vector3;
-
-using Vector2f = Vector2<float>;
-using Vec2f = Vector2f;
-using Vector2i = Vector2<int>;
-using Vec2i = Vector2i;
-
-using Vector3f = Vector3<float>;
-using Vec3f = Vector3<float>;
-using Vector3i = Vector3<int>;
-using Vec3i = Vector3i;
 
 // Useful Constants
 static constexpr float Pi = 3.14159265358979323846f;

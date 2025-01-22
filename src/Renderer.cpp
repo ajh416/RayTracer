@@ -16,7 +16,7 @@ void Renderer::Render(const Scene &scene, Camera &cam) {
 	}
 
 	if (m_FrameIndex == 1) {
-		memset(m_AccumulationData, 0, m_Image->Width * m_Image->Height * sizeof(Vec3f));
+		memset(m_AccumulationData, 0, m_Image->Width * m_Image->Height * sizeof(glm::vec3));
 	}
 	
 #define MT 1
@@ -35,7 +35,7 @@ void Renderer::Render(const Scene &scene, Camera &cam) {
 								m_AccumulationData[x + y * this->m_Image->Width] += color;
 								auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
 								accumulated_color /= (float)m_FrameIndex;
-                                accumulated_color = Utils::Clamp(accumulated_color, Vec3f(0.0f), Vec3f(1.0f));
+                                accumulated_color = glm::clamp(accumulated_color, glm::vec3(0.0f), glm::vec3(1.0f));
                                 m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
                               });
         });
@@ -107,7 +107,7 @@ void Renderer::Render(const Scene &scene, Camera &cam) {
                                             m_AccumulationData[x + y * this->m_Image->Width] += color;
                                             auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
                                             accumulated_color /= (float)m_FrameIndex;
-                                            accumulated_color = Utils::Clamp(accumulated_color, Vec3f(0.0f), Vec3f(1.0f));
+                                            accumulated_color = glm::clamp(accumulated_color, glm::vec3(0.0f), glm::vec3(1.0f));
                                             m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
                                     }
                             }
@@ -148,7 +148,7 @@ void Renderer::Render(const Scene &scene, Camera &cam) {
 void Renderer::SetImage(Image &image) {
         m_Image = &image;
         delete[] m_AccumulationData;
-        m_AccumulationData = new Vec3f[m_Image->Width * m_Image->Height];
+        m_AccumulationData = new glm::vec3[m_Image->Width * m_Image->Height];
 
         m_ImageVerticalIter.resize(m_Image->Height);
         m_ImageHorizontalIter.resize(m_Image->Width);
@@ -160,13 +160,13 @@ void Renderer::SetImage(Image &image) {
                 m_ImageHorizontalIter[y] = y;
 }
 
-Vec3f Renderer::PerPixel(const Vec2f &&coord) {
-        Vec3f light_res = 0.0f;
-        Vec3f res = 0.0f;
+glm::vec3 Renderer::PerPixel(const glm::vec2 &&coord) {
+        glm::vec3 light_res = glm::vec3(0.0f);
+        glm::vec3 res = glm::vec3(0.0f);
 
         for (int i = 0; i < m_Settings.NumberOfSamples; i++) {
-                Vec3f bounce_res = 0.0f;
-                Vec3f ray_color = 1.0f;
+                glm::vec3 bounce_res = glm::vec3(0.0f);
+                glm::vec3 ray_color = glm::vec3(1.0f);
 
                 //float u = float(coord.x + Utils::Randomfloat()) / (m_Image->Width - 1);  // transform the x coordinate to 0 ->
                                                                                          // 1 (rather than 0 -> image_width)
@@ -175,7 +175,7 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord) {
                                                                                          // u = float(coord.x) / (m_Image->Width
                                                                                          // - 1); auto v = float(coord.y) /
                                                                                          // (m_Image->Height - 1);
-                Ray<float> r = Ray(m_Camera->GetOrigin(), m_Camera->GetRayDirection({coord.x, coord.y}));
+                Ray r = Ray(m_Camera->GetOrigin(), m_Camera->GetRayDirection({coord.x, coord.y}));
 
                 // float multiplier = 1.0;
 
@@ -195,12 +195,12 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord) {
                                 // // make t 0 -> 1
 
                                 // res +=
-                                // Utils::Lerp(Vec3f(1.0),
-                                // Vec3f(0.5f,
+                                // Utils::Lerp(glm::vec3(1.0),
+                                // glm::vec3(0.5f,
                                 // 0.7f, 1.0f), t) *
                                 // multiplier;
                                 // bounce_res +=
-                                // Vec3f(0.0f);
+                                // glm::vec3(0.0f);
 
                                 break;
                         }
@@ -208,33 +208,33 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord) {
                         const Object *Object = m_Scene->Objects[payload.ObjectIndex];
                         const Material &material = m_Scene->Materials[Object->MaterialIndex];
 
-                        // Vec3f light_dir = Normalize(Vec3f(0,
+                        // glm::vec3 light_dir = Normalize(glm::vec3(0,
                         // 1, -1)); float light_intensity =
                         // Utils::Max(Dot(payload.WorldNormal,
                         // -light_dir), 0.0f); // == cos(angle)
 
-                        // Vec3f Object_color =
+                        // glm::vec3 Object_color =
                         // material.Albedo;
-                        Vec3f emitted_light = material.EmissionColor * material.EmissionStrength;
+                        glm::vec3 emitted_light = material.EmissionColor * material.EmissionStrength;
                         bounce_res += emitted_light * ray_color;
                         ray_color = ray_color * material.Albedo;
 
                         // Object_color *= light_intensity;
 
                         // res += Utils::Clamp(Object_color *
-                        // multiplier, Vec3f(0.0), Vec3f(1.0));
+                        // multiplier, glm::vec3(0.0), glm::vec3(1.0));
                         // bounce_res +=
                         // Utils::Clamp(Object_color *
-                        // multiplier, Vec3f(0.0), Vec3f(1.0));
+                        // multiplier, glm::vec3(0.0), glm::vec3(1.0));
 
                         // multiplier *= 0.7;
 
                         r.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
                         r.Direction =
-                            Reflect(r.Direction, payload.WorldNormal + material.Roughness * Utils::RandomVector(-0.1f, 0.1f));
+                            glm::reflect(r.Direction, payload.WorldNormal + material.Roughness * Utils::RandomVector(-0.1f, 0.1f));
                 }
 
-                res += Utils::Clamp(bounce_res, Vec3f(0.0f), Vec3f(1.0f));
+                res += glm::clamp(bounce_res, glm::vec3(0.0f), glm::vec3(1.0f));
         }
 
         // return res / (float)(m_Settings.NumberOfSamples *
@@ -242,7 +242,7 @@ Vec3f Renderer::PerPixel(const Vec2f &&coord) {
         return res / (float)(m_Settings.NumberOfSamples);
 }
 
-HitPayload Renderer::TraceRay(const Ray<float> &ray) {
+HitPayload Renderer::TraceRay(const Ray &ray) {
         int objectIndex = -1;
         float hitDistance = std::numeric_limits<float>::max();
 
@@ -264,22 +264,22 @@ HitPayload Renderer::TraceRay(const Ray<float> &ray) {
         return ClosestHit(ray, hitDistance, objectIndex);
 }
 
-constexpr HitPayload Renderer::ClosestHit(const Ray<float> &ray, float hitDistance, int objectIndex) {
+HitPayload Renderer::ClosestHit(const Ray &ray, float hitDistance, int objectIndex) {
         HitPayload payload;
         payload.HitDistance = hitDistance;
         payload.ObjectIndex = objectIndex;
 
         const Object *closestObject = m_Scene->Objects[objectIndex];
 
-        Vec3f origin = ray.Origin - closestObject->Origin;
+        glm::vec3 origin = ray.Origin - closestObject->Origin;
         payload.WorldPosition = origin + hitDistance * ray.Direction;
-        payload.WorldNormal = Normalize(payload.WorldPosition);
+        payload.WorldNormal = glm::normalize(payload.WorldPosition);
         payload.WorldPosition += closestObject->Origin;
 
         return payload;
 }
 
-constexpr HitPayload Renderer::Miss(const Ray<float> &ray) {
+constexpr HitPayload Renderer::Miss(const Ray &ray) {
         constexpr HitPayload payload = {.HitDistance = -1};
         return payload;
 }

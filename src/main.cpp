@@ -53,7 +53,7 @@ int main() {
 
 		scene.Objects.push_back(new Plane({0.0f, 4.0f, 10.0f}, {0.0f, 0.0f, 1.0f}, 3));
 
-		scene.Objects.push_back(new Triangle({Vec3f(-1.0f, 1.0f, -1.0f), Vec3f(1.0f, 1.0f, -1.0f), Vec3f(0, 2, -1)}));
+		scene.Objects.push_back(new Triangle({glm::vec3(-1.0f, 1.0f, -1.0f), glm::vec3(1.0f, 1.0f, -1.0f), glm::vec3(0, 2, -1)}));
 
 		scene.Objects.push_back(new Box({{2.0f, 1.0f, -1.0f}, {3.0f, 2.0f, -2.0f}}, 0));
 
@@ -63,38 +63,26 @@ int main() {
 		scene.Materials.push_back(Material({.Albedo = {0.0f, 0.0f, 0.0f},
 											.Roughness = 0.1f,
 											.Metallic = 0.0f,
-											.EmissionColor = Vec3f(0.9f, 0.4f, 0.8f),
+											.EmissionColor = glm::vec3(0.9f, 0.4f, 0.8f),
 											.EmissionStrength = 1.0f}));
-		scene.Materials.push_back(Material({{0.6f, 0.6f, 0.8f}, 0.1f, 0.0f, Vec3f(0.0f), 0.0f}));
-		scene.Materials.push_back(Material({{0.6f, 0.6f, 0.6f}, 0.05f, 0.0f, Vec3f(0.0f), 0.0f}));
-		scene.Materials.push_back(Material({{0.6f, 0.6f, 0.6f}, 0.1f, 0.0f, Vec3f(0.3f, 0.3f, 0.3f), 1.0f}));
+		scene.Materials.push_back(Material({{0.6f, 0.6f, 0.8f}, 0.1f, 0.0f, glm::vec3(0.0f), 0.0f}));
+		scene.Materials.push_back(Material({{0.6f, 0.6f, 0.6f}, 0.05f, 0.0f, glm::vec3(0.0f), 0.0f}));
+		scene.Materials.push_back(Material({{0.6f, 0.6f, 0.6f}, 0.1f, 0.0f, glm::vec3(0.3f, 0.3f, 0.3f), 1.0f}));
 
 		renderer.SetImage(img);
 		renderer.Render(scene, cam);
 
-		bool end = false;
 		// window must be created before using any OpenGL
 		Window window(2000, 1100, "RayTracer");
 		Input::Init(window.GetWindow());
 		Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
 
-		bool newImage = false;
-		auto lambda = [&]() {
-				while (!end) {
-						renderer.Render(scene, cam);
-						newImage = true;
-				}
-		};
-		auto val = std::async(std::launch::async, lambda);
-
 		while (!window.ShouldClose()) {
 				glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 				glClear(GL_COLOR_BUFFER_BIT);
 
-				if (newImage) {
-						tex.SetData((uint8_t *)img.Data);
-						newImage = false;
-				}
+				renderer.Render(scene, cam);
+				tex.SetData((uint8_t*)img.Data);
 
 				window.BeginImGui();
 				ImGui::Begin("Settings");
@@ -114,10 +102,11 @@ int main() {
 				ImGui::End();
 				window.EndImGui();
 				window.Update();
-				cam.Update();
+				if (cam.Update()) {
+						cam.RecalculateRayDirections();
+						renderer.ResetFrameIndex();
+				}
 		}
-		end = true;
-		val.wait();
 
 		ASSERT(ImageWriter::Write(img), "Image write failed!")
 }

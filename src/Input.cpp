@@ -1,5 +1,7 @@
 #include <Input.h>
 
+#include "Vector.h"
+
 #include <GLFW/glfw3.h>
 
 GLFWwindow* Input::m_Window = nullptr;
@@ -16,6 +18,13 @@ bool Input::IsKeyPressed(int key)
 bool Input::IsMouseButtonPressed(int button)
 {
 		return glfwGetMouseButton(m_Window, button) == GLFW_PRESS;
+}
+
+glm::vec2 Input::GetMousePosition()
+{
+		double x, y;
+		glfwGetCursorPos(m_Window, &x, &y);
+		return glm::vec2((float)x, (float)y);
 }
 
 float Input::GetMouseX()
