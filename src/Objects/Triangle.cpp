@@ -9,6 +9,8 @@ Triangle::Triangle(glm::vec3 v[3], int material_index) : Object(glm::vec3(1.0f),
 	glm::vec3 B = v[2] - v[0];
 	glm::vec3 C = glm::cross(A, B);
 	Normal = glm::normalize(C);
+
+	Origin = (v[0] + v[1] + v[2]) / 3.0f;
 }
 
 Triangle::Triangle(const glm::vec3& point1, const glm::vec3& point2, const glm::vec3& point3, int material_index) : Object(glm::vec3(1.0f), material_index) {
@@ -20,6 +22,8 @@ Triangle::Triangle(const glm::vec3& point1, const glm::vec3& point2, const glm::
 	glm::vec3 B = point3 - point1;
 	glm::vec3 C = glm::cross(A, B);
 	Normal = glm::normalize(C);
+
+	Origin = (point1 + point2 + point3) / 3.0f;
 }
 
 bool Triangle::Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const {

@@ -29,6 +29,9 @@ add_executable(RayTracer ${SOURCES} libs/stb_image/stb_image_write.h libs/stb_im
 # For imgui to not try and load OpenGL itself
 target_compile_definitions(RayTracer PRIVATE IMGUI_IMPL_OPENGL_LOADER_CUSTOM)
 
+# Enable experimental GLM features, used for camera
+target_compile_definitions(RayTracer PRIVATE GLM_ENABLE_EXPERIMENTAL)
+
 # Link to glfw
 target_link_libraries(RayTracer PRIVATE glfw)
 

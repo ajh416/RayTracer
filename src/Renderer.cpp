@@ -168,66 +168,19 @@ glm::vec3 Renderer::PerPixel(const glm::vec2 &&coord) {
                 glm::vec3 bounce_res = glm::vec3(0.0f);
                 glm::vec3 ray_color = glm::vec3(1.0f);
 
-                //float u = float(coord.x + Utils::Randomfloat()) / (m_Image->Width - 1);  // transform the x coordinate to 0 ->
-                                                                                         // 1 (rather than 0 -> image_width)
-                //float v = float(coord.y + Utils::Randomfloat()) / (m_Image->Height - 1); // transform the y coordinate to 0 -> 1
-                                                                                         // (rather than 0 -> image_height) auto
-                                                                                         // u = float(coord.x) / (m_Image->Width
-                                                                                         // - 1); auto v = float(coord.y) /
-                                                                                         // (m_Image->Height - 1);
-                Ray r = Ray(m_Camera->GetOrigin(), m_Camera->GetRayDirection({coord.x, coord.y}));
-
-                // float multiplier = 1.0;
+                Ray r = Ray(m_Camera->GetPosition(), m_Camera->GetRayDirection({coord.x, coord.y}));
 
                 for (int i = 0; i < m_Settings.NumberOfBounces + 1; i++) {
                         auto payload = TraceRay(r);
                         if (payload.HitDistance < 0) // did not hit object
-                        {
-                                // Vector3
-                                // unit_direction =
-                                // Normalize(r.Direction);
-                                // // the unit vector
-                                // (magnitude == 1) of
-                                // the rays direction
-                                // auto t = 0.5f *
-                                // (unit_direction.y
-                                // + 1.0f);
-                                // // make t 0 -> 1
-
-                                // res +=
-                                // Utils::Lerp(glm::vec3(1.0),
-                                // glm::vec3(0.5f,
-                                // 0.7f, 1.0f), t) *
-                                // multiplier;
-                                // bounce_res +=
-                                // glm::vec3(0.0f);
-
                                 break;
-                        }
 
                         const Object *Object = m_Scene->Objects[payload.ObjectIndex];
                         const Material &material = m_Scene->Materials[Object->MaterialIndex];
 
-                        // glm::vec3 light_dir = Normalize(glm::vec3(0,
-                        // 1, -1)); float light_intensity =
-                        // Utils::Max(Dot(payload.WorldNormal,
-                        // -light_dir), 0.0f); // == cos(angle)
-
-                        // glm::vec3 Object_color =
-                        // material.Albedo;
                         glm::vec3 emitted_light = material.EmissionColor * material.EmissionStrength;
                         bounce_res += emitted_light * ray_color;
                         ray_color = ray_color * material.Albedo;
-
-                        // Object_color *= light_intensity;
-
-                        // res += Utils::Clamp(Object_color *
-                        // multiplier, glm::vec3(0.0), glm::vec3(1.0));
-                        // bounce_res +=
-                        // Utils::Clamp(Object_color *
-                        // multiplier, glm::vec3(0.0), glm::vec3(1.0));
-
-                        // multiplier *= 0.7;
 
                         r.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
                         r.Direction =
@@ -237,8 +190,6 @@ glm::vec3 Renderer::PerPixel(const glm::vec2 &&coord) {
                 res += glm::clamp(bounce_res, glm::vec3(0.0f), glm::vec3(1.0f));
         }
 
-        // return res / (float)(m_Settings.NumberOfSamples *
-        // m_Settings.NumberOfBounces);
         return res / (float)(m_Settings.NumberOfSamples);
 }
 

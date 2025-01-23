@@ -21,10 +21,13 @@
 
 // TODO: TRIANGLE MESHES AND PERHAPS GPU
 
+void DisplayObjects(Scene& scene);
+void DisplayMaterials(Scene& scene);
+
 int main() {
 		Logger::Init();
 
-		constexpr int image_width = 1920;
+		constexpr int image_width = 1280;
 		constexpr float aspect_ratio = 16.0f / 9.0f;
 		constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
 
@@ -49,13 +52,7 @@ int main() {
 
 		scene.Objects.push_back(new Sphere({0.0f, -19.0f, -1.0f}, 20.0f, 2));
 
-		scene.Objects.push_back(new Plane({0.0f, -1.0f, -10.0f}, {0.0f, 0.0f, -1.0f}, 3));
-
-		scene.Objects.push_back(new Plane({0.0f, 4.0f, 10.0f}, {0.0f, 0.0f, 1.0f}, 3));
-
 		scene.Objects.push_back(new Triangle({glm::vec3(-1.0f, 1.0f, -1.0f), glm::vec3(1.0f, 1.0f, -1.0f), glm::vec3(0, 2, -1)}));
-
-		scene.Objects.push_back(new Box({{2.0f, 1.0f, -1.0f}, {3.0f, 2.0f, -2.0f}}, 0));
 
 		// Vector of materials accessed using indices
 		// look at this fancy syntax!
@@ -93,20 +90,55 @@ int main() {
 				static bool accumulate = true;
 				ImGui::Checkbox("Accumulate", &accumulate);
 				ImGui::Text("Frame (accumulation): %d", renderer.GetFrameIndex());
-				if (ImGui::Button("Save")) {
+				//if (ImGui::Button("Save")) {
 						renderer.SetSettings({.NumberOfSamples = samples, .NumberOfBounces = bounces, .Accumulate = accumulate});
-				}
+				//}
 				ImGui::End();
+				DisplayMaterials(scene);
 				ImGui::Begin("Image");
 				ImGui::Image((uintptr_t)tex.GetRendererID(), ImVec2((float)img.Width, (float)img.Height), ImVec2(0, 1), ImVec2(1, 0));
 				ImGui::End();
 				window.EndImGui();
 				window.Update();
 				if (cam.Update()) {
-						cam.RecalculateRayDirections();
 						renderer.ResetFrameIndex();
 				}
 		}
 
 		ASSERT(ImageWriter::Write(img), "Image write failed!")
+}
+
+void DisplayObjects(Scene& scene) {
+		ImGui::Begin("Objects");
+		int i = 0;
+		for (auto& object : scene.Objects) {
+				char label[32];
+				sprintf(label, "Object %d", i);
+				if (ImGui::BeginMenu(label)) {
+						ImGui::SliderFloat3("Position", &object->Origin.x, -10.0f, 10.0f);
+						ImGui::EndMenu();
+				}
+				ImGui::Text("Object");
+				i++;
+		}
+		ImGui::End();
+}
+
+void DisplayMaterials(Scene& scene) {
+		ImGui::Begin("Materials");
+		int i = 0;
+		for (auto& material : scene.Materials) {
+				char label[32];
+				sprintf(label, "Material %d", i);
+				if (ImGui::BeginMenu(label)) {
+						ImGui::ColorEdit3("Albedo", &material.Albedo.x);
+						ImGui::SliderFloat("Roughness", &material.Roughness, 0.0f, 1.0f);
+						ImGui::SliderFloat("Metallic", &material.Metallic, 0.0f, 1.0f);
+						ImGui::ColorEdit3("Emission Color", &material.EmissionColor.x);
+						ImGui::SliderFloat("Emission Strength", &material.EmissionStrength, 0.0f, 1.0f);
+						ImGui::EndMenu();
+				}
+				i++;
+		}
+		ImGui::End();
 }
