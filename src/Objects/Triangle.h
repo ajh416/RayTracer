@@ -2,7 +2,6 @@
 
 #include "RayTracer.h"
 
-#include "Vector.h"
 #include "Object.h"
 
 class Triangle : public Object {

@@ -1,7 +1,5 @@
 #include <Input.h>
 
-#include "Vector.h"
-
 #include <GLFW/glfw3.h>
 
 GLFWwindow* Input::m_Window = nullptr;

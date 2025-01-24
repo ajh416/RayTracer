@@ -2,9 +2,6 @@
 
 #include "RayTracer.h"
 
-#include "Vector.h"
-#include "Point.h"
-
 template<typename T>
 class Bounds2
 {
@@ -13,15 +10,15 @@ public:
 	{
 		T minNum = std::numeric_limits<T>::lowest();
 		T maxNum = std::numeric_limits<T>::lowest();
-		pMin = Point2<T>(maxNum, maxNum);
-		pMax = Point2<T>(minNum, minNum);
+		pMin = glm::vec2(maxNum, maxNum);
+		pMax = glm::vec2(minNum, minNum);
 	}
 
-	Bounds2(const Point2<float>& point) : pMin(point), pMax(point)
+	Bounds2(const glm::vec2& point) : pMin(point), pMax(point)
 	{
 	}
 
-	Bounds2(const Point2<T>& p1, const Point2<T>& p2)
+	Bounds2(const glm::vec2& p1, const glm::vec2& p2)
 		: pMin(std::min(p1.x, p2.x), std::min(p1.y, p2.y)),
 		pMax(std::max(p1.x, p2.x), std::max(p1.y, p2.y))
 	{
@@ -36,7 +33,7 @@ public:
 	}
 
 public:
-	Point2<T> pMin, pMax;
+	glm::vec2 pMin, pMax;
 };
 
 template<typename T>
@@ -47,15 +44,15 @@ public:
 	{
 		T minNum = std::numeric_limits<T>::lowest();
 		T maxNum = std::numeric_limits<T>::lowest();
-		pMin = Point3<T>(maxNum, maxNum, maxNum);
-		pMax = Point3<T>(minNum, minNum, minNum);
+		pMin = glm::vec3(maxNum, maxNum, maxNum);
+		pMax = glm::vec3(minNum, minNum, minNum);
 	}
 
-	Bounds3(const Point3<float>& point) : pMin(point), pMax(point)
+	Bounds3(const glm::vec3& point) : pMin(point), pMax(point)
 	{
 	}
 
-	Bounds3(const Point3<T>& p1, const Point3<T>& p2)
+	Bounds3(const glm::vec3& p1, const glm::vec3& p2)
 		: pMin(std::min(p1.x, p2.x), std::min(p1.y, p2.y), std::min(p1.z, p2.z)),
 		pMax(std::max(p1.x, p2.x), std::max(p1.y, p2.y), std::max(p1.z, p2.z))
 	{
@@ -70,5 +67,5 @@ public:
 	}
 
 public:
-	Point3<T> pMin, pMax;
+	glm::vec3 pMin, pMax;
 };

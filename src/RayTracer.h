@@ -11,6 +11,7 @@
 #include <random>
 
 #include "Timer.h"
+#include "glm/fwd.hpp"
 
 #include <glm/glm.hpp>
 
@@ -91,6 +92,19 @@ namespace Utils
 		return dis(eng);
 	}
 
+	inline glm::vec3 RandomVector(float low, float high)
+	{
+		return glm::vec3(Random(low, high), Random(low, high), Random(low, high));
+	}
+
+	inline uint32_t Vec3ToUInt32(const glm::vec3& v)
+	{
+		uint32_t x = (uint32_t)(v.x * 255.0f);
+		uint32_t y = (uint32_t)(v.y * 255.0f);
+		uint32_t z = (uint32_t)(v.z * 255.0f);
+		return (0xff << 24) | (z << 16) | (y << 8) | x;
+	}
+
 	template <typename T, typename U, typename V>
 	inline T Clamp(T val, U low, V high) {
 		if (val < low) return low;
@@ -164,44 +178,8 @@ namespace Utils
 #endif
 }
 
-//
-// Logging Includes and Defines
-//
-
-#include "Tools/Logger.h"
-
-#ifdef _WIN32
-#define ASSERT(x, ...) if (!x) { ::Logger::Get().Error(__VA_ARGS__); __debugbreak(); }
+#ifdef WIN32
+#define ASSERT(x, ...) { if(!(x)) { std::cout << "Assertion Failed: " << __VA_ARGS__ << std::endl; __debugbreak(); } }
 #else
-#define ASSERT(x, ...) if (!x) { ::Logger::Get().Error(__VA_ARGS__); }
-#endif
-
-#define ENABLE_LOG
-
-#ifdef ENABLE_LOG
-
-#define LOG_DEBUG(...) ::Logger::Get().Debug(__VA_ARGS__)
-
-#define LOG_INFO(...) ::Logger::Get().Info(__VA_ARGS__)
-
-#define LOG_WARN(...) ::Logger::Get().Warn(__VA_ARGS__)
-
-#define LOG_ERROR(...) ::Logger::Get().Error(__VA_ARGS__)
-
-#ifdef _WIN32
-#define LOG_CRITICAL(...) ::Logger::Get().Critical(__VA_ARGS__); __debugbreak();
-#else
-#define LOG_CRITICAL(...) ::Logger::Get().Critical(__VA_ARGS__);
-#endif
-
-#else
-
-#define LOG_INFO(...)
-
-#define LOG_WARN(...)
-
-#define LOG_ERROR(...)
-
-#define LOG_CRITICAL(...)
-
+#define ASSERT(x, ...) { if(!(x)) { std::cout << "Assertion Failed: " << __VA_ARGS__ << std::endl; } }
 #endif

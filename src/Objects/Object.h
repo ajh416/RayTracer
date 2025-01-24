@@ -1,7 +1,6 @@
 #pragma once
 
 #include "RayTracer.h"
-#include "Vector.h"
 #include "Ray.h"
 
 struct HitPayload

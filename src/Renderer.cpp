@@ -1,7 +1,6 @@
 #include "Renderer.h"
 
 #include "Ray.h"
-#include "Vector.h"
 
 #include <string.h>
 #include <array>
@@ -108,7 +107,7 @@ void Renderer::Render(const Scene &scene, Camera &cam) {
                                             auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
                                             accumulated_color /= (float)m_FrameIndex;
                                             accumulated_color = glm::clamp(accumulated_color, glm::vec3(0.0f), glm::vec3(1.0f));
-                                            m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
+                                            m_Image->Data[x + y * this->m_Image->Width] = Utils::Vec3ToUInt32(accumulated_color);
                                     }
                             }
                             // printf("thread %i finished\n", i);

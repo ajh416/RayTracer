@@ -1,7 +1,6 @@
 #pragma once
 
 #include "RayTracer.h"
-#include "Vector.h"
 
 class Ray
 {
