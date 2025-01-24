@@ -34,8 +34,12 @@ bool Camera::Update() {
 		glm::vec3 right = glm::cross(m_ForwardDirection, up);
 
 		bool moved = false;
-		if (!Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_2))
+		if (!Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_2)) {
+				glfwSetInputMode(Input::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				return false;
+		}
+
+		glfwSetInputMode(Input::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		if (Input::IsKeyPressed(GLFW_KEY_W)) {
 				m_Position += m_ForwardDirection;
@@ -57,8 +61,8 @@ bool Camera::Update() {
 
 		if (delta.x != 0.0f || delta.y != 0.0f)
 		{
-				float pitchDelta = delta.y * 0.3f;
-				float yawDelta = delta.x * 0.3f;
+				float pitchDelta = delta.y * 0.5f;
+				float yawDelta = delta.x * 0.5f;
 
 				glm::quat q = glm::normalize(glm::cross(glm::angleAxis(-pitchDelta, right),
 						glm::angleAxis(-yawDelta, glm::vec3(0.f, 1.0f, 0.0f))));
