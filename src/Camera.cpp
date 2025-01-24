@@ -20,6 +20,8 @@ Camera::Camera(int image_width, float aspect_ratio, glm::vec3 origin)
 		m_Position = origin;
 		m_LastMousePosition = Input::GetMousePosition();
 
+		CalculateProjectionMatrix();
+		CalculateViewMatrix();
 		RecalculateRayDirections();
 }
 

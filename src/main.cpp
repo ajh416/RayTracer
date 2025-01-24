@@ -18,6 +18,7 @@
 #include <future>
 
 #include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 // TODO: TRIANGLE MESHES AND PERHAPS GPU
 
@@ -73,6 +74,8 @@ int main() {
 		Window window(2000, 1100, "RayTracer");
 		Input::Init(window.GetWindow());
 		Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
+		double frametime = 0.0;
+		double lastTime = glfwGetTime();
 
 		while (!window.ShouldClose()) {
 				glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -82,6 +85,7 @@ int main() {
 				tex.SetData((uint8_t*)img.Data);
 
 				window.BeginImGui();
+
 				ImGui::Begin("Settings");
 				static int samples = 1;
 				ImGui::SliderInt("Samples", &samples, 1, 100);
@@ -90,19 +94,24 @@ int main() {
 				static bool accumulate = true;
 				ImGui::Checkbox("Accumulate", &accumulate);
 				ImGui::Text("Frame (accumulation): %d", renderer.GetFrameIndex());
-				//if (ImGui::Button("Save")) {
-						renderer.SetSettings({.NumberOfSamples = samples, .NumberOfBounces = bounces, .Accumulate = accumulate});
-				//}
+				ImGui::Text("Frame Time: %.3fms", frametime * 1000);
 				ImGui::End();
+
+				renderer.SetSettings({ .NumberOfSamples = samples, .NumberOfBounces = bounces, .Accumulate = accumulate });
+
 				DisplayMaterials(scene);
+
 				ImGui::Begin("Image");
 				ImGui::Image((uintptr_t)tex.GetRendererID(), ImVec2((float)img.Width, (float)img.Height), ImVec2(0, 1), ImVec2(1, 0));
 				ImGui::End();
+
 				window.EndImGui();
 				window.Update();
 				if (cam.Update()) {
 						renderer.ResetFrameIndex();
 				}
+				frametime = glfwGetTime() - lastTime;
+				lastTime = glfwGetTime();
 		}
 
 		ASSERT(ImageWriter::Write(img), "Image write failed!")

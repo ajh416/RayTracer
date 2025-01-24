@@ -127,14 +127,12 @@ void Renderer::Render(const Scene &scene, Camera &cam) {
 
         for (int y = 0; y < (int)m_Image->Height; y++) {
                 for (int x = 0; x < (int)m_Image->Width; x++) {
-                        for (int i = 0; i < m_Settings.AccumulateMax; i++) {
-                                auto color = PerPixel({(float)x, (float)y});
-                                m_AccumulationData[x + y * m_Image->Width] += color;
-                        }
-                        auto accumulated_color = m_AccumulationData[x + y * m_Image->Width];
-                        accumulated_color /= (float)m_Settings.AccumulateMax;
-
-                        m_Image->Data[x + y * m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
+                        auto color = PerPixel({ (float)x, (float)y });
+                        m_AccumulationData[x + y * this->m_Image->Width] += color;
+                        auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
+                        accumulated_color /= (float)m_FrameIndex;
+                        accumulated_color = glm::clamp(accumulated_color, glm::vec3(0.0f), glm::vec3(1.0f));
+                        m_Image->Data[x + y * this->m_Image->Width] = Utils::VectorToUInt32(accumulated_color);
                 }
         }
 
