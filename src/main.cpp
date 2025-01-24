@@ -94,6 +94,9 @@ int main() {
 						renderer.SetSettings({.NumberOfSamples = samples, .NumberOfBounces = bounces, .Accumulate = accumulate});
 				//}
 				ImGui::End();
+				// objects will only move if their calculations invoke the m_Origin, which not all do
+				// TODO: make all objects moveable
+				DisplayObjects(scene);
 				DisplayMaterials(scene);
 				ImGui::Begin("Image");
 				ImGui::Image((uintptr_t)tex.GetRendererID(), ImVec2((float)img.Width, (float)img.Height), ImVec2(0, 1), ImVec2(1, 0));
@@ -116,9 +119,18 @@ void DisplayObjects(Scene& scene) {
 				sprintf(label, "Object %d", i);
 				if (ImGui::BeginMenu(label)) {
 						ImGui::SliderFloat3("Position", &object->Origin.x, -10.0f, 10.0f);
+						if (object->GetType() == ObjectType::Sphere) {
+								auto sphere = dynamic_cast<Sphere*>(object);
+								ImGui::SliderFloat("Radius", &sphere->Radius, 0.0f, 10.0f);
+						}
+						if (object->GetType() == ObjectType::Triangle) {
+								auto triangle = dynamic_cast<Triangle*>(object);
+								ImGui::SliderFloat3("Vertex 1", &triangle->Vertices[0].x, -10.0f, 10.0f);
+								ImGui::SliderFloat3("Vertex 2", &triangle->Vertices[1].x, -10.0f, 10.0f);
+								ImGui::SliderFloat3("Vertex 3", &triangle->Vertices[2].x, -10.0f, 10.0f);
+						}
 						ImGui::EndMenu();
 				}
-				ImGui::Text("Object");
 				i++;
 		}
 		ImGui::End();

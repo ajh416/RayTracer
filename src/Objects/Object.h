@@ -23,12 +23,24 @@ struct Material
 	float EmissionStrength = 0.0f;
 };
 
+enum class ObjectType
+{
+	Sphere,
+	Triangle,
+	Plane,
+	BoundingBox,
+	Mesh
+};
+
 class Object
 {
 public:
 	Object(const glm::vec3& origin, int material_index) : Origin(origin), MaterialIndex(material_index) {}
+	virtual ~Object() = default;
 
 	virtual bool Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const = 0;
+
+	virtual ObjectType GetType() = 0;
 
 	glm::vec3 Origin;
 	int MaterialIndex = 0;

@@ -41,6 +41,9 @@ target_include_directories(RayTracer PRIVATE src/ libs/ libs/glad/include/ libs/
 # Set C++ standard to 20
 target_compile_features(RayTracer PRIVATE cxx_std_20)
 
+# Set the warning level and optimization level, no optimizations leads to VERY slow frames
+target_compile_options(RayTracer PRIVATE -Wall -O2)
+
 # Set the operating system specific defines
 if (WIN32)
 	target_compile_definitions(RayTracer PRIVATE RT_WINDOWS)
