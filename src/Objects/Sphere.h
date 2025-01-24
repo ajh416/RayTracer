@@ -11,7 +11,7 @@ public:
 	virtual bool Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const override
 	{
 		// Using equation sqrLength(r.Origin + r.Direction * distance) = radius^2
-		glm::vec3 oc = r.Origin - Position; // origin of ray - origin of sphere
+		glm::vec3 oc = r.Origin - Origin; // origin of ray - origin of sphere
 		auto a = glm::dot(r.Direction, r.Direction); // square the direction
 		auto b = 2.0f * glm::dot(oc, r.Direction);
 		auto c = glm::dot(oc, oc) - Radius * Radius;
@@ -40,6 +40,8 @@ public:
 		//return Utils::VectorToUInt32(Utils::Lerp(glm::vec3(1.0), glm::vec3(0.5, 0.7, 1.0), t)); // lerp the values to white -> light blue based on y coord
 		return false;
 	}
+
+	virtual ObjectType GetType() override { return ObjectType::Sphere; }
 
 public:
 	glm::vec3 Position;

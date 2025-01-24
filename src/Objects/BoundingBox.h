@@ -32,7 +32,7 @@ public:
 		glm::vec2 min = glm::vec2((float)pMin.x, (float)pMin.y);
 		glm::vec2 max = glm::vec2((float)pMax.x, (float)pMax.y);
 		auto direction = max - min;
-		return min + direction * 0.5;
+		return min + direction * 0.5f;
 	}
 
 public:
