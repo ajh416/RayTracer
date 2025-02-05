@@ -1,6 +1,6 @@
 #include "Box.h"
 
-bool Box::Hit(const Ray<float>& r, float tMin, float tMax, float& hitDistance) const
+bool Box::Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const
 {
     float t1 = (m_Box.pMin.x - r.Origin.x) / r.Direction.x;
     float t2 = (m_Box.pMax.x - r.Origin.x) / r.Direction.x;

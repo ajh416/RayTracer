@@ -4,7 +4,6 @@
 
 #include "Image.h"
 #include "Camera.h"
-#include "Vector.h"
 #include "Scene.h"
 
 struct RenderSettings
@@ -12,7 +11,6 @@ struct RenderSettings
 	int NumberOfSamples = 1;
 	int NumberOfBounces = 1;
 	bool Accumulate = true;
-	int AccumulateMax = 1;
 };
 
 class Renderer
@@ -21,29 +19,33 @@ public:
 	Renderer() = default;
 	~Renderer() { delete[] m_AccumulationData; }
 
-	void Render(const Scene& scene, const Camera& cam);
+	void Render(const Scene& scene, Camera& cam);
 
 	constexpr void SetSettings(const RenderSettings&& settings) { m_Settings = settings; }
 
 	void SetImage(Image& image);
+	void ResetFrameIndex() { m_FrameIndex = 1; }
+	uint32_t GetFrameIndex() const { return m_FrameIndex; }
 
 private:
-	Vec3f PerPixel(const Vec2f&& coord); // comparable to RayGen shader in GPU ray tracing
+	glm::vec3 PerPixel(const glm::vec2&& coord); // comparable to RayGen shader in GPU ray tracing
 
-	HitPayload TraceRay(const Ray<float>& ray);
+	HitPayload TraceRay(const Ray& ray);
 
-	constexpr HitPayload ClosestHit(const Ray<float>& ray, float hitDistance, int objectIndex);
+	HitPayload ClosestHit(const Ray& ray, float hitDistance, int objectIndex);
 
-	constexpr HitPayload Miss(const Ray<float>& ray);
+	constexpr HitPayload Miss(const Ray& ray);
 
 	Image* m_Image = nullptr;
-	Vec3f* m_AccumulationData = nullptr;
+	glm::vec3* m_AccumulationData = nullptr;
 
 	std::vector<uint32_t> m_ImageVerticalIter;
 	std::vector<uint32_t> m_ImageHorizontalIter;
 
-	const Camera* m_Camera = nullptr;
+	Camera* m_Camera = nullptr;
 	const Scene* m_Scene = nullptr;
 
 	RenderSettings m_Settings;
+
+	uint32_t m_FrameIndex = 1;
 };

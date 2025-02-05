@@ -11,6 +11,9 @@
 #include <random>
 
 #include "Timer.h"
+#include "glm/fwd.hpp"
+
+#include <glm/glm.hpp>
 
 template<typename T>
 class Bounds2;
@@ -27,21 +30,6 @@ class Point3;
 
 using Point2f = Point2<float>;
 using Point3f = Point3<float>;
-
-template<typename T>
-class Vector2;
-template<typename T>
-class Vector3;
-
-using Vector2f = Vector2<float>;
-using Vec2f = Vector2f;
-using Vector2i = Vector2<int>;
-using Vec2i = Vector2i;
-
-using Vector3f = Vector3<float>;
-using Vec3f = Vector3<float>;
-using Vector3i = Vector3<int>;
-using Vec3i = Vector3i;
 
 // Useful Constants
 static constexpr float Pi = 3.14159265358979323846f;
@@ -102,6 +90,19 @@ namespace Utils
 		static thread_local std::default_random_engine eng(std::random_device{}());
 		static std::uniform_real_distribution<float> dis(low, high);
 		return dis(eng);
+	}
+
+	inline glm::vec3 RandomVector(float low, float high)
+	{
+		return glm::vec3(Random(low, high), Random(low, high), Random(low, high));
+	}
+
+	inline uint32_t Vec3ToUInt32(const glm::vec3& v)
+	{
+		uint32_t x = (uint32_t)(v.x * 255.0f);
+		uint32_t y = (uint32_t)(v.y * 255.0f);
+		uint32_t z = (uint32_t)(v.z * 255.0f);
+		return (0xff << 24) | (z << 16) | (y << 8) | x;
 	}
 
 	template <typename T, typename U, typename V>
@@ -177,44 +178,8 @@ namespace Utils
 #endif
 }
 
-//
-// Logging Includes and Defines
-//
-
-#include "Tools/Logger.h"
-
-#ifdef _WIN32
-#define ASSERT(x, ...) if (!x) { ::Logger::Get().Error(__VA_ARGS__); __debugbreak(); }
+#ifdef WIN32
+#define ASSERT(x, ...) { if(!(x)) { std::cout << "Assertion Failed: " << __VA_ARGS__ << std::endl; __debugbreak(); } }
 #else
-#define ASSERT(x, ...) if (!x) { ::Logger::Get().Error(__VA_ARGS__); }
-#endif
-
-#define ENABLE_LOG
-
-#ifdef ENABLE_LOG
-
-#define LOG_DEBUG(...) ::Logger::Get().Debug(__VA_ARGS__)
-
-#define LOG_INFO(...) ::Logger::Get().Info(__VA_ARGS__)
-
-#define LOG_WARN(...) ::Logger::Get().Warn(__VA_ARGS__)
-
-#define LOG_ERROR(...) ::Logger::Get().Error(__VA_ARGS__)
-
-#ifdef _WIN32
-#define LOG_CRITICAL(...) ::Logger::Get().Critical(__VA_ARGS__); __debugbreak();
-#else
-#define LOG_CRITICAL(...) ::Logger::Get().Critical(__VA_ARGS__);
-#endif
-
-#else
-
-#define LOG_INFO(...)
-
-#define LOG_WARN(...)
-
-#define LOG_ERROR(...)
-
-#define LOG_CRITICAL(...)
-
+#define ASSERT(x, ...) { if(!(x)) { std::cout << "Assertion Failed: " << __VA_ARGS__ << std::endl; } }
 #endif

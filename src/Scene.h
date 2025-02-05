@@ -2,9 +2,6 @@
 
 #include "RayTracer.h"
 #include "Objects/Object.h"
-#include "Vector.h"
-
-#include <vector>
 
 struct Scene
 {

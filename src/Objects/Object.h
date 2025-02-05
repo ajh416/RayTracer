@@ -1,13 +1,12 @@
 #pragma once
 
 #include "RayTracer.h"
-#include "Vector.h"
 #include "Ray.h"
 
 struct HitPayload
 {
-	Vec3f WorldPosition;
-	Vec3f WorldNormal;
+	glm::vec3 WorldPosition;
+	glm::vec3 WorldNormal;
 	float HitDistance;
 
 	int ObjectIndex;
@@ -15,21 +14,33 @@ struct HitPayload
 
 struct Material
 {
-	Vec3f Albedo = { 1.0 };
-	float Roughness = 1.0;
-	float Metallic = 0.0;
+	glm::vec3 Albedo = glm::vec3(1.0f);
+	float Roughness = 1.0f;
+	float Metallic = 0.0f;
 
-	Vec3f EmissionColor = 0.0;
-	float EmissionStrength = 0.0;
+	glm::vec3 EmissionColor = glm::vec3(0.0f);
+	float EmissionStrength = 0.0f;
+};
+
+enum class ObjectType
+{
+	Sphere,
+	Triangle,
+	Plane,
+	BoundingBox,
+	Mesh
 };
 
 class Object
 {
 public:
-	Object(const Vec3f& origin, int material_index) : Origin(origin), MaterialIndex(material_index) {}
+	Object(const glm::vec3& origin, int material_index) : Origin(origin), MaterialIndex(material_index) {}
+	virtual ~Object() = default;
 
-	virtual bool Hit(const Ray<float>& r, float tMin, float tMax, float& hitDistance) const = 0;
+	virtual bool Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const = 0;
 
-	Vec3f Origin;
+	virtual ObjectType GetType() = 0;
+
+	glm::vec3 Origin;
 	int MaterialIndex = 0;
 };

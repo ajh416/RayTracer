@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Tools/Logger.h"
-
+#include <stdio.h>
 #include <chrono>
 #include <string>
 
@@ -21,7 +20,7 @@ public:
 		auto start = std::chrono::time_point_cast<std::chrono::milliseconds>(m_StartTimepoint).time_since_epoch().count();
 		auto end = std::chrono::time_point_cast<std::chrono::milliseconds>(stopTimepoint).time_since_epoch().count();
 
-		Logger::Get().Debug("Timer {0} took {1} milliseconds to complete!", m_Name, end - start);
+		printf("%s took %fms\n", m_Name.c_str(), (end - start) * 0.001);
 
 		m_Stopped = true;
 	}
