@@ -4,6 +4,7 @@
 
 #include "Object.h"
 #include <Objects/Triangle.h>
+#include <Objects/Box.h>
 
 class Mesh : public Object {
 public:
@@ -16,6 +17,7 @@ public:
 	std::vector<glm::vec3> Vertices;
 	std::vector<glm::vec3> Triangles;
 	std::vector<Triangle> MeshTriangles;
+	Box BoundingBox;
 private:
 	bool LoadFromOBJ(const std::string& filename);
 };
