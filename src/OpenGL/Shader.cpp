@@ -20,6 +20,7 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath) {
 		return;
 	}
 	const unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
 	glCompileShader(fragmentShader);
 	success = 0;
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);

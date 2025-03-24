@@ -39,7 +39,7 @@ public:
 
 	virtual bool Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const = 0;
 
-	virtual ObjectType GetType() = 0;
+	virtual ObjectType GetType() const = 0;
 
 	glm::vec3 Origin;
 	int MaterialIndex = 0;

@@ -14,5 +14,5 @@ public:
 
 	bool Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const override;
 
-	virtual ObjectType GetType() override { return ObjectType::Triangle; }
+	virtual ObjectType GetType() const override { return ObjectType::Triangle; }
 };

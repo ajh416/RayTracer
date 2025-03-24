@@ -41,7 +41,7 @@ public:
 		return false;
 	}
 
-	virtual ObjectType GetType() override { return ObjectType::Sphere; }
+	virtual ObjectType GetType() const override { return ObjectType::Sphere; }
 
 public:
 	glm::vec3 Position;
