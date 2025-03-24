@@ -17,7 +17,6 @@ Mesh::Mesh(const std::string& filename, const int&& material_index) : Object(glm
 		max.y = std::max(max.y, vert.y);
 		max.z = std::max(max.z, vert.z);
 	}
-	printf("Mesh bounding box min: (%f, %f, %f) max: (%f, %f, %f)\n", min.x, min.y, min.z, max.x, max.y, max.z);
 	BoundingBox = Box(Bounds3<float>(min, max), std::move(material_index));
 }
 
