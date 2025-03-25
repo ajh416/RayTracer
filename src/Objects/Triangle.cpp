@@ -58,3 +58,15 @@ bool Triangle::Hit(const Ray& r, float tMin, float tMax, float& hitDistance) con
 
 	return true;
 }
+
+void Triangle::MoveTo(const glm::vec3& newOrigin) {
+	for (int i = 0; i < 3; i++) {
+		Vertices[i] += newOrigin - Origin;
+	}
+	glm::vec3 A = Vertices[1] - Vertices[0];
+	glm::vec3 B = Vertices[2] - Vertices[0];
+	glm::vec3 C = glm::cross(A, B);
+	Normal = glm::normalize(C);
+
+	Origin = (Vertices[0] + Vertices[1] + Vertices[2]) / 3.0f;
+}

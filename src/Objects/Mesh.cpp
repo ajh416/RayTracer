@@ -5,19 +5,7 @@
 
 Mesh::Mesh(const std::string& filename, const int&& material_index) : Object(glm::vec3(1.0f), material_index), BoundingBox(Bounds3f(glm::vec3(0.0f), glm::vec3(0.0f)), std::move(material_index)) {
 	LoadFromOBJ(filename);
-	// Calculate bounding box
-	glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
-	glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
-	for (const auto& vert : Vertices) {
-		min.x = std::min(min.x, vert.x);
-		min.y = std::min(min.y, vert.y);
-		min.z = std::min(min.z, vert.z);
-
-		max.x = std::max(max.x, vert.x);
-		max.y = std::max(max.y, vert.y);
-		max.z = std::max(max.z, vert.z);
-	}
-	BoundingBox = Box(Bounds3<float>(min, max), std::move(material_index));
+	CalculateBoundingBox();
 }
 
 bool Mesh::Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const
@@ -36,6 +24,13 @@ bool Mesh::Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const
 		}
 	}
 	return false;
+}
+
+void Mesh::MoveTo(const glm::vec3& newOrigin) {
+	for (auto& tri : MeshTriangles) {
+		tri.MoveTo(newOrigin);
+	}
+	CalculateBoundingBox();
 }
 
 bool Mesh::LoadFromOBJ(const std::string& filename) {
@@ -85,4 +80,20 @@ bool Mesh::LoadFromOBJ(const std::string& filename) {
 	long duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 	printf("Loaded %zu vertices and %zu triangles from %s in %ldus\n", Vertices.size(), Triangles.size(), filename.c_str(), duration);
 	return true;
+}
+
+void Mesh::CalculateBoundingBox() {
+	glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
+	glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
+	for (const auto& vert : Vertices) {
+		min.x = std::min(min.x, vert.x);
+		min.y = std::min(min.y, vert.y);
+		min.z = std::min(min.z, vert.z);
+
+		max.x = std::max(max.x, vert.x);
+		max.y = std::max(max.y, vert.y);
+		max.z = std::max(max.z, vert.z);
+	}
+	BoundingBox = Box(Bounds3<float>(min, max), std::move(MaterialIndex));
+	Origin = BoundingBox.m_Box.Center();
 }

@@ -47,6 +47,8 @@ int main() {
 	// scene.Objects.push_back(new Sphere({ -3.0f, 7.0f, -10.0f }, 5.0f, 0));
 	scene.Objects.push_back(new Mesh("../ico_sphere.wavefront", 0));
 
+	scene.Objects.push_back(new Plane({0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, 1));
+
 	// Vector of materials accessed using indices
 	// look at this fancy syntax!
 	// is it good syntax? not sure.
@@ -55,6 +57,12 @@ int main() {
 				.Metallic = 0.0f,
 				.EmissionColor = glm::vec3(0.9f, 0.4f, 0.8f),
 				.EmissionStrength = 1.0f}));
+
+	scene.Materials.push_back(Material({.Albedo = {0.2f, 0.8f, 0.2f},
+				.Roughness = 0.1f,
+				.Metallic = 0.0f,
+				.EmissionColor = glm::vec3(0.0f, 0.0f, 0.0f),
+				.EmissionStrength = 0.0f}));
 
 	renderer.SetImage(img);
 	renderer.Render(scene, cam);
@@ -134,6 +142,11 @@ void DisplayObjects(Scene& scene) {
 			}
 			if (object->GetType() == ObjectType::Mesh) {
 				auto mesh = dynamic_cast<Mesh*>(object);
+				static glm::vec3 newOrigin;
+				ImGui::SliderFloat3("Adjust Position", &newOrigin.x, -100.0f, 100.0f);
+				if (ImGui::Button("Update Mesh Position")) {
+					mesh->MoveTo(newOrigin);
+				}
 				int j = 0;
 				for (auto& tri : mesh->MeshTriangles) {
 					ImGui::PushID(j);

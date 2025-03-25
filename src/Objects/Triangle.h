@@ -14,5 +14,7 @@ public:
 
 	bool Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const override;
 
+	void MoveTo(const glm::vec3& newOrigin);
+
 	virtual ObjectType GetType() const override { return ObjectType::Triangle; }
 };

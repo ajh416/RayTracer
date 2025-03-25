@@ -21,15 +21,12 @@ void Renderer::Render(const Scene &scene, Camera &cam) {
 		m_Scene = &scene;
 	}
 
-	// TODO: fix this, it slows down the render when moving the camera, as its always frameindex 1
 	if (m_FrameIndex == 1) {
 		memset(m_AccumulationData, 0, m_Image->Width * m_Image->Height * sizeof(glm::vec3));
 	}
 
 #define MT 1
-
 #if MT
-#if RT_WINDOWS
 	// A good bit faster than using my 8 thread version below
 	// This (sometimes) doesn't work on linux apparently
 	// something something libtbb
@@ -44,89 +41,6 @@ void Renderer::Render(const Scene &scene, Camera &cam) {
 					m_Image->Data[x + y * this->m_Image->Width] = Utils::Vec3ToUInt32(accumulated_color);
 					});
 			});
-
-#else // RT_WINDOWS
-#define NUM_THREADS 8
-
-	struct ImgBlock {
-		uint32_t start_w, start_h, end_w, end_h;
-	};
-	std::vector<ImgBlock> blocks;
-
-	/*
-	 * Following section from
-	 * https://superkogito.github.io/blog/2020/10/01/divide_image_using_opencv.html
-	 * Adapted by ajh416 for use without opencv
-	 */
-
-	// init image dimensions
-	uint32_t imgWidth = this->m_Image->Width;
-	uint32_t imgHeight = this->m_Image->Height;
-
-	// std::cout << "IMAGE SIZE: "
-	//           << "(" << imgWidth << "," << imgHeight << ")" << std::endl;
-
-	// init block dimensions
-	uint32_t bwSize;
-	uint32_t bhSize;
-
-	uint32_t blockWidth = imgWidth / (NUM_THREADS / 2);
-	uint32_t blockHeight = imgHeight / (2);
-
-	uint32_t y0 = 0;
-	while (y0 < imgHeight) {
-		// compute the block height
-		bhSize = ((y0 + blockHeight) > imgHeight) * (blockHeight - (y0 + blockHeight - imgHeight)) +
-			((y0 + blockHeight) <= imgHeight) * blockHeight;
-		int x0 = 0;
-		while (x0 < imgWidth) {
-			// compute the block height
-			bwSize = ((x0 + blockWidth) > imgWidth) * (blockWidth - (x0 + blockWidth - imgWidth)) +
-				((x0 + blockWidth) <= imgWidth) * blockWidth;
-
-			// crop block
-			blocks.push_back(ImgBlock(x0, y0, x0 + bwSize, y0 + bhSize));
-
-			// update x-coordinate
-			x0 = x0 + blockWidth;
-		}
-
-		// update y-coordinate
-		y0 = y0 + blockHeight;
-	}
-
-	std::array<std::future<void>, NUM_THREADS> threads;
-	for (int i = 0; i < NUM_THREADS; i++) {
-		threads[i] = std::async(
-				std::launch::async,
-				[&](int i) {
-				uint32_t start_w = blocks[i].start_w, start_h = blocks[i].start_h, end_w = blocks[i].end_w,
-				end_h = blocks[i].end_h;
-				// printf("thread %i start: (%u, %u), end: "
-				//        "(%u, %u)\n",
-				//        i, start_w, start_h, end_w, end_h);
-
-				for (int y = start_h; y < end_h; y++) {
-				for (int x = start_w; x < end_w; x++) {
-				auto color = PerPixel({ (float)x, (float)y });
-				m_AccumulationData[x + y * this->m_Image->Width] += color;
-				auto accumulated_color = m_AccumulationData[x + y * this->m_Image->Width];
-				accumulated_color /= (float)m_FrameIndex;
-				accumulated_color = glm::clamp(accumulated_color, glm::vec3(0.0f), glm::vec3(1.0f));
-				m_Image->Data[x + y * this->m_Image->Width] = Utils::Vec3ToUInt32(accumulated_color);
-				}
-				}
-				// printf("thread %i finished\n", i);
-				},
-				i);
-	}
-
-	// Wait while the threads complete. TODO: IS THIS NECESSARY?
-	for (int i = 0; i < NUM_THREADS; i++)
-		while (!threads[i].valid()) {
-		}
-
-#endif // RT_WINDOWS
 
 #else // MT
 
@@ -182,17 +96,20 @@ glm::vec3 Renderer::PerPixel(const glm::vec2 &&coord) {
 
 			glm::vec3 emitted_light = material.EmissionColor * material.EmissionStrength;
 			bounce_res += emitted_light * ray_color;
-			ray_color = ray_color * material.Albedo;
+			ray_color *= material.Albedo;
+			if (glm::length(ray_color) < 0.01f && i > 2) { 
+				break; // Avoid unimportant rays wasting computation
+			}
 
 			r.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
 			r.Direction =
-				glm::reflect(r.Direction, payload.WorldNormal + material.Roughness * Utils::RandomVector(-0.1f, 0.1f));
+				glm::reflect(r.Direction, glm::normalize(payload.WorldNormal + material.Roughness * Utils::RandomVector(-1.0f, 1.0f)));
 		}
 
-		res += glm::clamp(bounce_res, glm::vec3(0.0f), glm::vec3(1.0f));
+		res += bounce_res;
 	}
 
-	return res / (float)(m_Settings.NumberOfSamples);
+	return glm::clamp(res / (float)(m_Settings.NumberOfSamples), glm::vec3(0.0f), glm::vec3(1.0f));
 }
 
 HitPayload Renderer::TraceRay(const Ray &ray) {
