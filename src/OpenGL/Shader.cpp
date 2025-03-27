@@ -92,7 +92,11 @@ void Shader::SetUniformMat4f(const char* name, const glm::mat4& value) {
 
 // could be improved with caching (e.g. a hash table)
 int Shader::GetUniformLocation(const char* name) {
-	return glGetUniformLocation(renderer_id, name);
+	if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end()) {
+		return m_UniformLocationCache[name];
+	}
+	m_UniformLocationCache[name] = glGetUniformLocation(renderer_id, name);
+	return m_UniformLocationCache[name];
 }
 
 const char* Shader::ParseShader(const char* filePath) {

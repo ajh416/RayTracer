@@ -101,13 +101,13 @@ glm::vec3 Camera::GetRayDirection(glm::vec2&& coord) {
 void Camera::CalculateViewMatrix()
 {
 		const auto view = glm::perspectiveFov(glm::radians(45.0f), (float)m_Width, (float)m_Height, 0.1f, 100.0f);
-		m_InverseProjection = glm::inverse(view);
+		m_InverseView = glm::inverse(view);
 }
 
 void Camera::CalculateProjectionMatrix()
 {
 		const auto proj = glm::lookAt(m_Position, m_Position + m_ForwardDirection, glm::vec3(0, 1, 0));
-		m_InverseView = glm::inverse(proj);
+		m_InverseProjection = glm::inverse(proj);
 }
 
 glm::vec3 Camera::CalculateRayDirection(glm::vec2&& coord) {

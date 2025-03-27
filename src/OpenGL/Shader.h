@@ -1,4 +1,8 @@
+#pragma once
+
 #include <glm/glm.hpp>
+
+#include <unordered_map>
 
 class Shader {
 	public:
@@ -14,6 +18,7 @@ class Shader {
 		void SetUniformMat4f(const char *name, const glm::mat4 &value);
 	private:
 		unsigned int renderer_id;
+		std::unordered_map<const char*, int> m_UniformLocationCache;
 		int GetUniformLocation(const char *name);
 		const char* ParseShader(const char *filePath);
 };
