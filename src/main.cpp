@@ -24,13 +24,13 @@
 
 // GPU STUFF NEEDS TO BE REFACTORED INTO SEPARATE FILE
 struct TriangleGPU {
-	glm::vec4 v0, v1, v2;
-	glm::vec4 normal;
+	glm::vec4 v0, v1, v2;  // Use vec4 instead of vec3 for proper alignment
+	glm::vec4 normal;      // Use vec4 instead of vec3
 	int materialIndex;
 };
 
 struct MeshGPU {
-	glm::vec4 minBounds, maxBounds;
+	glm::vec4 minBounds, maxBounds;  // Use vec4 instead of vec3
 	int startTriangleIndex;
 	int triangleCount;
 };
@@ -65,7 +65,7 @@ int main() {
 	// ====================================================================
 
 	// scene.Objects.push_back(new Sphere({ -3.0f, 7.0f, -10.0f }, 5.0f, 0));
-	scene.Objects.push_back(new Mesh("../monkey.obj", 1));
+	scene.Objects.push_back(new Mesh("../ico_sphere.wavefront", 1));
 
 	// Vector of materials accessed using indices
 	// look at this fancy syntax!
@@ -82,8 +82,8 @@ int main() {
 				.EmissionColor = glm::vec3(0.0f, 0.0f, 0.0f),
 				.EmissionStrength = 0.0f}));
 
-	renderer.SetImage(img);
-	renderer.Render(scene, cam);
+	//renderer.SetImage(img);
+	//renderer.Render(scene, cam);
 
 	// window must be created before using any OpenGL
 	Window window(2000, 1100, "RayTracer");
@@ -91,7 +91,7 @@ int main() {
 	Input::Init(window.GetWindow());
 	// create texture with image data
 	// ideally we'll use a framebuffer or texture when rendering using gpu, but this works for cpu
-	Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
+	//Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
 
 	SetupFullscreenQuad();
 	SetupFramebuffer();
@@ -106,25 +106,54 @@ int main() {
 			auto mesh = dynamic_cast<Mesh*>(object);
 			int startTriangleIndex = triangles.size();
 			int triangleCount = mesh->MeshTriangles.size();
-			meshes.push_back({ .minBounds = glm::vec4(mesh->BoundingBox.m_Box.pMin, 1.0), .maxBounds = glm::vec4(mesh->BoundingBox.m_Box.pMax, 1.0), .startTriangleIndex = startTriangleIndex, .triangleCount = triangleCount });
+			meshes.push_back({
+					.minBounds = glm::vec4(mesh->BoundingBox.m_Box.pMin, 1.0f),
+					.maxBounds = glm::vec4(mesh->BoundingBox.m_Box.pMax, 1.0f),
+					.startTriangleIndex = startTriangleIndex,
+					.triangleCount = triangleCount
+					});
 			for (auto& tri : mesh->MeshTriangles) {
-				triangles.push_back({ .v0 = glm::vec4(tri.Vertices[0], 1.0), .v1 = glm::vec4(tri.Vertices[1], 1.0), .v2 = glm::vec4(tri.Vertices[2], 1.0), .normal = glm::vec4(tri.Normal, 1.0), .materialIndex = tri.MaterialIndex });
+				triangles.push_back({
+						.v0 = glm::vec4(tri.Vertices[0], 1.0f),
+						.v1 = glm::vec4(tri.Vertices[1], 1.0f),
+						.v2 = glm::vec4(tri.Vertices[2], 1.0f),
+						.normal = glm::vec4(tri.Normal, 0.0f),   // 0 for directions
+						.materialIndex = tri.MaterialIndex
+						});
 			}
 		}
 	}
 
 	shader.Bind();
-	// Upload triangles
+
+	// Debug output
+	std::cout << "Triangle count: " << triangles.size() << std::endl;
+	std::cout << "Mesh count: " << meshes.size() << std::endl;
+
+	// Ensure buffers are explicitly padded to match GLSL std430 layout
+	// Print first few triangles for debugging
+	if (!triangles.empty()) {
+		std::cout << "First triangle: v0(" << triangles[0].v0.x << "," << triangles[0].v0.y << "," << triangles[0].v0.z << ")" << std::endl;
+	}
+
+	// Upload triangles - Clear any previous buffer
+	glDeleteBuffers(1, &ssboTriangles);
 	glGenBuffers(1, &ssboTriangles);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboTriangles);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, triangles.size() * sizeof(TriangleGPU), triangles.data(), GL_STATIC_DRAW);
+	// This is critical - bind to index 0
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboTriangles);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
 
-	// Upload meshes
+	// Upload meshes - Clear any previous buffer
+	glDeleteBuffers(1, &ssboMeshes);
 	glGenBuffers(1, &ssboMeshes);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboMeshes);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, meshes.size() * sizeof(MeshGPU), meshes.data(), GL_STATIC_DRAW);
+	// This is critical - bind to index 1
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboMeshes);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
+
 	shader.Unbind();
 
 	glViewport(0, 0, img.Width, img.Height);
@@ -139,6 +168,9 @@ int main() {
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		shader.Bind();
 		// vertex uniforms
 
@@ -148,18 +180,18 @@ int main() {
 		shader.SetUniform3f("CameraPosition", cam.GetPosition());
 		shader.SetUniform1i("NumberOfSamples", samples);
 		shader.SetUniform1i("NumberOfBounces", bounces);
+		// Set length uniforms - so you don't rely on .length()
+		shader.SetUniform1i("TriangleCount", triangles.size());
+		shader.SetUniform1i("MeshCount", meshes.size());
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboTriangles);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboMeshes);
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBindVertexArray(quadVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		shader.Unbind();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		window.BeginImGui();
 
 		ImGui::Begin("Settings");
@@ -171,7 +203,10 @@ int main() {
 		ImGui::End();
 
 		ImGui::Begin("Debug");
-		ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", cam.GetPosition().x, cam.GetPosition().y, cam.GetPosition().z);
+		auto pos = cam.GetPosition();
+		auto dir = cam.GetForwardDirection();
+		ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", pos.x, pos.y, pos.z);
+		ImGui::Text("Camera Direction: (%.2f, %.2f, %.2f)", dir.x, dir.y, dir.z);
 		ImGui::End();
 
 		renderer.SetSettings({ .NumberOfSamples = samples, .NumberOfBounces = bounces, .Accumulate = accumulate });
@@ -186,7 +221,7 @@ int main() {
 		window.EndImGui();
 		window.Update();
 		if (cam.Update()) {
-			renderer.ResetFrameIndex();
+			//renderer.ResetFrameIndex();
 		}
 		frametime = glfwGetTime() - lastTime;
 		lastTime = glfwGetTime();

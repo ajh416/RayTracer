@@ -1,6 +1,7 @@
 #version 460
 
 out vec4 FragColor;
+
 in vec2 aFragCoord; // computed here
 
 uniform sampler2D RandomTexture;
@@ -9,18 +10,19 @@ uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
 uniform int NumberOfSamples;
 uniform int NumberOfBounces;
+uniform int TriangleCount;
+uniform int MeshCount;
 
 struct Triangle {
-	vec3 v0, v1, v2;  // Triangle vertices
-	vec3 normal;
+	vec4 v0, v1, v2;  // Use vec4 instead of vec3
+	vec4 normal;      // Use vec4 instead of vec3
 	int materialIndex;
 };
 
 struct Mesh {
-	vec3 minBounds;         // Bounding box min corner
-	vec3 maxBounds;         // Bounding box max corner
-	int startTriangleIndex; // Index of first triangle in global triangle array
-	int triangleCount;      // Number of triangles in this mesh
+	vec4 minBounds, maxBounds;  // Use vec4 instead of vec3
+	int startTriangleIndex;
+	int triangleCount;
 };
 
 struct Ray {
@@ -51,18 +53,42 @@ layout(std430, binding = 1) buffer MeshesBuffer {
 };
 
 uniform Material Materials[128]; // Assume we have up to 128 materials
-uniform int ObjectCount;
 
 // Function prototypes
 Ray GenerateRay();
 HitPayload TraceRay(Ray r);
 bool TriangleHit(Ray r, Triangle tri, float tMin, float tMax, out float hitDist);
-bool AABBHit(Ray r, vec3 minBounds, vec3 maxBounds, float tMin, float tMax);
+bool AABBHit(Ray r, vec3 minBounds, vec3 maxBounds, float tMin, float tMax, out float hitDist);
 HitPayload Miss(Ray r);
 vec3 RandomVector(vec2 uv);
 
 void main() {
 	vec3 res = vec3(0.0);
+	Ray r = GenerateRay();
+	HitPayload payload = TraceRay(r);
+
+	if (payload.hitDistance > 0.0) {
+		if (payload.materialIndex == 0) {
+			// Debug triangle - green
+			FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+		}
+		else if (payload.materialIndex == 3) {
+			// Debug AABB - blue
+			FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+		}
+		else if (payload.materialIndex == 4) {
+			// Mesh AABB - purple
+			FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+		}
+		else {
+			// Other object - red
+			FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+		}
+	} else {
+		// Miss - gray
+		FragColor = vec4(0.5, 0.5, 0.5, 1.0);
+	}
+	return;
 
 	for (int s = 0; s < NumberOfSamples; s++) {
 		vec3 bounce_res = vec3(0.0);
@@ -72,17 +98,7 @@ void main() {
 
 		for (int b = 0; b <= NumberOfBounces; b++) {
 			HitPayload payload = TraceRay(r);
-			if (payload.hitDistance > 0.0) {
-				// If a hit occurs, visualize the intersection point as a red dot
-				vec3 hitColor = vec3(1.0, 0.0, 0.0); // Red for hit
-				FragColor = vec4(hitColor, 1.0);
-				return;
-			} else {
-				// Otherwise, visualize ray direction as background color (like before)
-				FragColor = vec4(abs(r.direction), 1.0);
-				return;
-			}
-			//if (payload.hitDistance < 0.0) break; // No hit
+			if (payload.hitDistance < 0.0) break; // No hit
 
 			//Material material = Materials[payload.materialIndex];
 
@@ -105,21 +121,23 @@ void main() {
 	FragColor = vec4(res / float(NumberOfSamples), 1.0);
 }
 
-// Generate a camera ray from screen coordinates
 Ray GenerateRay() {
 	// Map screen space to NDC
-	vec4 ndc = vec4(aFragCoord * 2.0 - 1.0, 0.0, 1.0); // -1 to 1 space
+	vec4 ndc = vec4(aFragCoord * 2.0 - 1.0, -1.0, 1.0); // Using -1 for z (near plane)
 
-	// Convert to view space using the inverse projection matrix
-	vec4 viewSpace = inverse(ProjectionMatrix) * ndc;
+	// Transform to view space using inverse projection 
+	vec4 viewSpace = ProjectionMatrix * ndc;
 
-	// Normalize the resulting 4D homogeneous coordinates
+	// Perform perspective division to get view-space position
 	viewSpace /= viewSpace.w;
 
-	// Convert to world space (direction vector)
-	vec3 rayDirection = normalize((inverse(ViewMatrix) * viewSpace).xyz);
+	// Get ray direction in view space (from origin to this point)
+	vec3 viewRayDir = normalize(viewSpace.xyz);
 
-	return Ray(CameraPosition, rayDirection);
+	// Transform direction to world space
+	vec3 worldRayDir = normalize((ViewMatrix * vec4(viewRayDir, 0.0)).xyz);
+
+	return Ray(CameraPosition, worldRayDir);
 }
 
 HitPayload TraceRay(Ray r) {
@@ -127,31 +145,89 @@ HitPayload TraceRay(Ray r) {
 	closestHit.hitDistance = 1e10;
 	closestHit.materialIndex = -1;
 
-	for (int i = 0; i < Meshes.length(); i++) {
+	// Debug: Check our mesh count
+	if (MeshCount == 0 || TriangleCount == 0) {
+		// Debug info - return a hit with red color
+		closestHit.hitDistance = 1.0;
+		closestHit.materialIndex = 1; // Use a material index that causes red 
+		closestHit.worldPosition = r.origin + r.direction;
+		closestHit.worldNormal = vec3(1.0, 0.0, 0.0);
+		return closestHit;
+	}
+
+	Triangle debugTri;
+	debugTri.v0 = vec4(-1.0, -1.0, -3.0, 1.0);
+	debugTri.v1 = vec4(1.0, -1.0, -3.0, 1.0);
+	debugTri.v2 = vec4(0.0, 1.0, -3.0, 1.0);
+	debugTri.normal = vec4(0.0, 0.0, 1.0, 1.0);
+	debugTri.materialIndex = 0;
+
+	float debugDist = 0.0;
+	if (TriangleHit(r, debugTri, 0.001, closestHit.hitDistance, debugDist)) {
+		closestHit.hitDistance = debugDist;
+		closestHit.materialIndex = 0;
+		closestHit.worldPosition = r.origin + r.direction * debugDist;
+		closestHit.worldNormal = debugTri.normal.xyz;
+		// Always return the debug triangle if we hit it
+		return closestHit;
+	}
+
+	for (int i = 0; i < MeshCount; i++) {
+		Mesh mesh = Meshes[i];
+		float hitDist = 0.0;
+
+		// ONLY test AABB, skip triangle tests
+		if (AABBHit(r, mesh.minBounds.xyz, mesh.maxBounds.xyz, 0.001, closestHit.hitDistance, hitDist)) {
+			closestHit.hitDistance = hitDist;
+			closestHit.materialIndex = 4; // Special index for mesh AABB
+			closestHit.worldPosition = r.origin + r.direction * hitDist;
+
+			// Simple normal calculation
+			vec3 hitPoint = closestHit.worldPosition;
+			vec3 center = (mesh.minBounds.xyz + mesh.maxBounds.xyz) * 0.5;
+			closestHit.worldNormal = normalize(hitPoint - center);
+
+			// Found a mesh AABB hit, return immediately
+			return closestHit;
+		}
+	}
+
+	if (TriangleCount > 0) {
+		// Sample first 5 triangles at most
+		int samplesToCheck = max(0, TriangleCount);
+
+		for (int i = 0; i < samplesToCheck; i++) {
+			float hitDist = 0.0;
+			if (TriangleHit(r, Triangles[i], 0.001, closestHit.hitDistance, hitDist)) {
+				closestHit.hitDistance = hitDist;
+				closestHit.materialIndex = 5; // Special index for sample triangle
+				closestHit.worldPosition = r.origin + r.direction * hitDist;
+				closestHit.worldNormal = Triangles[i].normal.xyz;
+				// Found a triangle hit, no need to continue
+				return closestHit;
+			}
+		}
+	}
+	// Replace your mesh loop using count uniforms instead of .length()
+	for (int i = 0; i < MeshCount; i++) {
 		Mesh mesh = Meshes[i];
 
-		// Step 1: AABB Culling
-		if (!AABBHit(r, mesh.minBounds, mesh.maxBounds, 0.001, closestHit.hitDistance)) {
+		float hitDist = 0.0;
+		if (!AABBHit(r, mesh.minBounds.xyz, mesh.maxBounds.xyz, 0.001, closestHit.hitDistance, hitDist)) {
 			continue;
 		}
 
-
-		closestHit.hitDistance = 5;
-		closestHit.materialIndex = 0;
-		closestHit.worldPosition = vec3(0, 0, 0);
-		closestHit.worldNormal = vec3(0, 0, 0);
-		return closestHit;
-		
-		// Step 2: Iterate through triangles in the mesh
+		hitDist = 0.0;
 		for (int j = 0; j < mesh.triangleCount; j++) {
 			int triIndex = mesh.startTriangleIndex + j;
-			float hitDist;
+			if (triIndex >= TriangleCount) continue; // Bounds check
+
 			if (TriangleHit(r, Triangles[triIndex], 0.001, closestHit.hitDistance, hitDist)) {
 				if (hitDist > 0.0 && hitDist < closestHit.hitDistance) {
 					closestHit.hitDistance = hitDist;
 					closestHit.materialIndex = Triangles[triIndex].materialIndex;
 					closestHit.worldPosition = r.origin + r.direction * hitDist;
-					closestHit.worldNormal = Triangles[triIndex].normal;
+					closestHit.worldNormal = Triangles[triIndex].normal.xyz;
 				}
 			}
 		}
@@ -161,15 +237,15 @@ HitPayload TraceRay(Ray r) {
 }
 
 bool TriangleHit(Ray r, Triangle tri, float tMin, float tMax, out float hitDist) {
-	vec3 edge1 = tri.v1 - tri.v0;
-	vec3 edge2 = tri.v2 - tri.v0;
+	vec3 edge1 = tri.v1.xyz - tri.v0.xyz;
+	vec3 edge2 = tri.v2.xyz - tri.v0.xyz;
 	vec3 h = cross(r.direction, edge2);
 	float a = dot(edge1, h);
 
 	if (abs(a) < 0.0001) return false; // Parallel
 
 	float f = 1.0 / a;
-	vec3 s = r.origin - tri.v0;
+	vec3 s = r.origin - tri.v0.xyz;
 	float u = f * dot(s, h);
 	if (u < 0.0 || u > 1.0) return false;
 
@@ -181,15 +257,32 @@ bool TriangleHit(Ray r, Triangle tri, float tMin, float tMax, out float hitDist)
 	return (hitDist > tMin && hitDist < tMax);
 }
 
-bool AABBHit(Ray r, vec3 minBounds, vec3 maxBounds, float tMin, float tMax) {
-	vec3 invDir = 1.0 / r.direction;
-	vec3 t0 = (minBounds - r.origin) * invDir;
-	vec3 t1 = (maxBounds - r.origin) * invDir;
-	vec3 tMinVec = min(t0, t1);
-	vec3 tMaxVec = max(t0, t1);
-	float tNear = max(max(tMinVec.x, tMinVec.y), tMinVec.z);
-	float tFar  = min(min(tMaxVec.x, tMaxVec.y), tMaxVec.z);
-	return (tNear < tFar) && (tFar > 0.0);
+bool AABBHit(Ray r, vec3 minBounds, vec3 maxBounds, float tMin, float tMax, out float hitDist) {
+	// Ultra-simple slab test
+	float txmin = (minBounds.x - r.origin.x) / r.direction.x;
+	float txmax = (maxBounds.x - r.origin.x) / r.direction.x;
+	if (txmin > txmax) { float temp = txmin; txmin = txmax; txmax = temp; }
+
+	float tymin = (minBounds.y - r.origin.y) / r.direction.y;
+	float tymax = (maxBounds.y - r.origin.y) / r.direction.y;
+	if (tymin > tymax) { float temp = tymin; tymin = tymax; tymax = temp; }
+
+	if (txmin > tymax || tymin > txmax) return false;
+	float tmin = max(txmin, tymin);
+	float tmax = min(txmax, tymax);
+
+	float tzmin = (minBounds.z - r.origin.z) / r.direction.z;
+	float tzmax = (maxBounds.z - r.origin.z) / r.direction.z;
+	if (tzmin > tzmax) { float temp = tzmin; tzmin = tzmax; tzmax = temp; }
+
+	if (tmin > tzmax || tzmin > tmax) return false;
+	tmin = max(tmin, tzmin);
+	tmax = min(tmax, tzmax);
+
+	if (tmin < 0 && tmax < 0) return false;  // Box is behind the ray
+
+	hitDist = (tmin >= 0) ? tmin : tmax;  // Use tmax when inside the box
+	return (hitDist >= tMin && hitDist <= tMax);
 }
 
 HitPayload Miss(Ray r) {

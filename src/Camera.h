@@ -26,6 +26,7 @@ public:
 	glm::mat4 GetInverseProjection() const { return m_InverseProjection; }
 	glm::mat4 GetViewProjection() const { return glm::inverse(m_InverseProjection) * glm::inverse(m_InverseView); }
 	glm::vec3 GetPosition() const { return m_Position; }
+	glm::vec3 GetForwardDirection() const { return m_ForwardDirection; }
 private:
 	int m_Width;
 	int m_Height;

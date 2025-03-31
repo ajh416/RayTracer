@@ -10,76 +10,76 @@
 #include <OpenGL/Window.h>
 
 Camera::Camera(int image_width, float aspect_ratio, glm::vec3 origin)
-		: m_Width(image_width), m_Height(static_cast<int>(image_width / aspect_ratio)), m_AspectRatio(aspect_ratio)
+	: m_Width(image_width), m_Height(static_cast<int>(image_width / aspect_ratio)), m_AspectRatio(aspect_ratio)
 {
-		m_Width = image_width;
-		m_Height = static_cast<int>(image_width / aspect_ratio);
-		m_AspectRatio = aspect_ratio;
-		
-		m_ForwardDirection = { 0.0f, 0.0f, -1.0f };
-		m_Position = origin;
-		m_LastMousePosition = Input::GetMousePosition();
+	m_Width = image_width;
+	m_Height = static_cast<int>(image_width / aspect_ratio);
+	m_AspectRatio = aspect_ratio;
 
-		CalculateProjectionMatrix();
-		CalculateViewMatrix();
-		RecalculateRayDirections();
+	m_ForwardDirection = { 0.0f, 0.0f, -1.0f };
+	m_Position = origin;
+	m_LastMousePosition = Input::GetMousePosition();
+
+	CalculateProjectionMatrix();
+	CalculateViewMatrix();
+	RecalculateRayDirections();
 }
 
 bool Camera::Update() {
-		glm::vec2 mousePos = Input::GetMousePosition();
-		glm::vec2 delta = (mousePos - m_LastMousePosition) * 0.002f;
-		m_LastMousePosition = mousePos;
+	glm::vec2 mousePos = Input::GetMousePosition();
+	glm::vec2 delta = (mousePos - m_LastMousePosition) * 0.002f;
+	m_LastMousePosition = mousePos;
 
-		constexpr glm::vec3 up = { 0.0f, 1.0f, 0.0f };
-		glm::vec3 right = glm::cross(m_ForwardDirection, up);
+	constexpr glm::vec3 up = { 0.0f, 1.0f, 0.0f };
+	glm::vec3 right = glm::cross(m_ForwardDirection, up);
 
-		bool moved = false;
-		if (!Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_2)) {
-				glfwSetInputMode(Input::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-				return false;
-		}
+	bool moved = false;
+	if (!Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_2)) {
+		glfwSetInputMode(Input::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		return false;
+	}
 
-		glfwSetInputMode(Input::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(Input::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-		if (Input::IsKeyPressed(GLFW_KEY_W)) {
-				m_Position += m_ForwardDirection;
-				moved = true;
-				
-		}
-		if (Input::IsKeyPressed(GLFW_KEY_S)) {
-				m_Position -= m_ForwardDirection;
-				moved = true;
-		}
-		if (Input::IsKeyPressed(GLFW_KEY_A)) {
-				m_Position -= right;
-				moved = true;
-		}
-		if (Input::IsKeyPressed(GLFW_KEY_D)) {
-				m_Position += right;
-				moved = true;
-		}
+	if (Input::IsKeyPressed(GLFW_KEY_W)) {
+		m_Position += m_ForwardDirection;
+		moved = true;
 
-		if (delta.x != 0.0f || delta.y != 0.0f)
-		{
-				float pitchDelta = delta.y * 0.5f;
-				float yawDelta = delta.x * 0.5f;
+	}
+	if (Input::IsKeyPressed(GLFW_KEY_S)) {
+		m_Position -= m_ForwardDirection;
+		moved = true;
+	}
+	if (Input::IsKeyPressed(GLFW_KEY_A)) {
+		m_Position -= right;
+		moved = true;
+	}
+	if (Input::IsKeyPressed(GLFW_KEY_D)) {
+		m_Position += right;
+		moved = true;
+	}
 
-				glm::quat q = glm::normalize(glm::cross(glm::angleAxis(-pitchDelta, right),
-						glm::angleAxis(-yawDelta, glm::vec3(0.f, 1.0f, 0.0f))));
+	if (delta.x != 0.0f || delta.y != 0.0f)
+	{
+		float pitchDelta = delta.y * 0.5f;
+		float yawDelta = delta.x * 0.5f;
 
-				// requires glm experimental def set
-				m_ForwardDirection = glm::rotate(q, m_ForwardDirection);
+		glm::quat q = glm::normalize(glm::cross(glm::angleAxis(-pitchDelta, right),
+					glm::angleAxis(-yawDelta, glm::vec3(0.f, 1.0f, 0.0f))));
 
-				moved = true;
-		}
+		// requires glm experimental def set
+		m_ForwardDirection = glm::rotate(q, m_ForwardDirection);
 
-		if (moved) {
-				CalculateViewMatrix();
-				CalculateProjectionMatrix();
-				RecalculateRayDirections();
-		}
+		moved = true;
+	}
 
-		return moved;
+	if (moved) {
+		CalculateViewMatrix();
+		CalculateProjectionMatrix();
+		RecalculateRayDirections();
+	}
+
+	return moved;
 }
 
 void Camera::RecalculateRayDirections() {
@@ -98,23 +98,21 @@ glm::vec3 Camera::GetRayDirection(glm::vec2&& coord) {
 	return m_RayDirections[(int)coord.x + (int)coord.y * m_Width];
 }
 
-void Camera::CalculateViewMatrix()
-{
-		const auto view = glm::perspectiveFov(glm::radians(45.0f), (float)m_Width, (float)m_Height, 0.1f, 100.0f);
-		m_InverseView = glm::inverse(view);
+void Camera::CalculateProjectionMatrix() {
+	const auto projection = glm::perspectiveFov(glm::radians(45.0f), (float)m_Width, (float)m_Height, 0.1f, 100.0f);
+	m_InverseProjection = glm::inverse(projection);
 }
 
-void Camera::CalculateProjectionMatrix()
-{
-		const auto proj = glm::lookAt(m_Position, m_Position + m_ForwardDirection, glm::vec3(0, 1, 0));
-		m_InverseProjection = glm::inverse(proj);
+void Camera::CalculateViewMatrix() {
+	const auto view = glm::lookAt(m_Position, m_Position + m_ForwardDirection, glm::vec3(0, 1, 0));
+	m_InverseView = glm::inverse(view);
 }
 
 glm::vec3 Camera::CalculateRayDirection(glm::vec2&& coord) {
-		coord = { coord.x / (float)m_Width, coord.y / (float)m_Height };
-		coord = coord * 2.0f - 1.0f; // -1 -> 1
+	coord = { coord.x / (float)m_Width, coord.y / (float)m_Height };
+	coord = coord * 2.0f - 1.0f; // -1 -> 1
 
-		glm::vec4 target = m_InverseProjection * glm::vec4(coord.x, coord.y, 1, 1);
-		glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0)); // World space
-		return rayDirection;
+	glm::vec4 target = m_InverseProjection * glm::vec4(coord.x, coord.y, 1, 1);
+	glm::vec3 rayDirection = glm::vec3(m_InverseView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0)); // World space
+	return rayDirection;
 }
