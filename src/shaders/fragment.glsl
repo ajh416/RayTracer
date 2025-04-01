@@ -12,17 +12,20 @@ uniform int NumberOfSamples;
 uniform int NumberOfBounces;
 uniform int TriangleCount;
 uniform int MeshCount;
+uniform float Time; // For random seed
 
 struct Triangle {
 	vec4 v0, v1, v2;  // Use vec4 instead of vec3
 	vec4 normal;      // Use vec4 instead of vec3
 	int materialIndex;
+	int padding[3];
 };
 
 struct Mesh {
 	vec4 minBounds, maxBounds;  // Use vec4 instead of vec3
 	int startTriangleIndex;
 	int triangleCount;
+	int padding[2];  // Add padding for alignment
 };
 
 struct Ray {
@@ -32,9 +35,11 @@ struct Ray {
 
 struct Material {
 	vec3 albedo;
+	float roughness;
 	vec3 emissionColor;
 	float emissionStrength;
-	float roughness;
+	float metallic;
+	float padding[3];  // Add padding for alignment
 };
 
 struct HitPayload {
@@ -52,7 +57,9 @@ layout(std430, binding = 1) buffer MeshesBuffer {
 	Mesh Meshes[];
 };
 
-uniform Material Materials[128]; // Assume we have up to 128 materials
+layout(std430, binding = 2) buffer MaterialsBuffer {
+	Material Materials[];
+};
 
 // Function prototypes
 Ray GenerateRay();
@@ -61,69 +68,116 @@ bool TriangleHit(Ray r, Triangle tri, float tMin, float tMax, out float hitDist)
 bool AABBHit(Ray r, vec3 minBounds, vec3 maxBounds, float tMin, float tMax, out float hitDist);
 HitPayload Miss(Ray r);
 vec3 RandomVector(vec2 uv);
+uint pcg_hash(uint seed);
+float RandomFloat(inout uint state);
+vec3 RandomInUnitSphere(inout uint state);
+vec3 GetEnvironmentColor(vec3 dir);
 
 void main() {
-	vec3 res = vec3(0.0);
-	Ray r = GenerateRay();
-	HitPayload payload = TraceRay(r);
+	// Initialize RNG state based on fragment coordinate and time
+	uint state = uint(aFragCoord.x * 1973.0 + aFragCoord.y * 9277.0 + Time * 26699.0) | 1u;
 
-	if (payload.hitDistance > 0.0) {
-		if (payload.materialIndex == 0) {
-			// Debug triangle - green
-			FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+	vec3 finalColor = vec3(0.0);
+
+	// Debug visualization - remove when path tracing is confirmed working
+	if (NumberOfSamples == 1 && NumberOfBounces == 0) {
+		Ray ray = GenerateRay();
+		HitPayload payload = TraceRay(ray);
+
+		if (payload.hitDistance > 0.0) {
+			if (payload.materialIndex >= 0 && payload.materialIndex < 128) {
+				// Use actual material albedo
+				Material mat = Materials[payload.materialIndex];
+				FragColor = vec4(mat.albedo, 1.0);
+			} else {
+				// Other object - red
+				FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+			}
+		} else {
+			// Miss - sky color
+			FragColor = vec4(GetEnvironmentColor(ray.direction), 1.0);
 		}
-		else if (payload.materialIndex == 3) {
-			// Debug AABB - blue
-			FragColor = vec4(0.0, 0.0, 1.0, 1.0);
-		}
-		else if (payload.materialIndex == 4) {
-			// Mesh AABB - purple
-			FragColor = vec4(1.0, 0.0, 1.0, 1.0);
-		}
-		else {
-			// Other object - red
-			FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-		}
-	} else {
-		// Miss - gray
-		FragColor = vec4(0.5, 0.5, 0.5, 1.0);
+		return;
 	}
-	return;
 
+	// Full path tracing with multiple bounces
 	for (int s = 0; s < NumberOfSamples; s++) {
-		vec3 bounce_res = vec3(0.0);
-		vec3 ray_color = vec3(1.0);
+		vec3 throughput = vec3(1.0);  // Light attenuation
+		Ray ray = GenerateRay();
 
-		Ray r = GenerateRay();
+		for (int b = 0; b < NumberOfBounces; b++) {
+			HitPayload payload = TraceRay(ray);
 
-		for (int b = 0; b <= NumberOfBounces; b++) {
-			HitPayload payload = TraceRay(r);
-			if (payload.hitDistance < 0.0) break; // No hit
+			if (payload.hitDistance < 0.0) {
+				// No hit - add environment contribution
+				finalColor += throughput * GetEnvironmentColor(ray.direction);
+				break;
+			}
 
-			//Material material = Materials[payload.materialIndex];
+			// Get material of hit object
+			Material material;
+			if (payload.materialIndex >= 0 && payload.materialIndex < 128) {
+				material = Materials[payload.materialIndex];
+			} else {
+				// Default material if index is invalid
+				material.albedo = vec3(0.8, 0.8, 0.8);
+				material.roughness = 0.5;
+				material.emissionColor = vec3(0.0);
+				material.emissionStrength = 0.0;
+				material.metallic = 0.0;
+			}
 
-			//vec3 emitted_light = material.emissionColor * material.emissionStrength;
-			vec3 emitted_light = vec3(1.0);
-			bounce_res += emitted_light * ray_color; // Add emission
-								 //ray_color *= material.albedo; // Light color attenuation
-			ray_color *= vec3(0.4, 0.5, 0.7); // Light color attenuation
+			// Handle light emission
+			finalColor += throughput * material.emissionColor * material.emissionStrength;
 
-			// Apply roughness perturbation
-			//vec3 perturbedNormal = normalize(payload.worldNormal + material.roughness * RandomVector(uv));
-			vec3 perturbedNormal = normalize(payload.worldNormal + 0.1);
-			r.origin = payload.worldPosition + perturbedNormal * 0.0001;
-			r.direction = reflect(r.direction, perturbedNormal);
+			// Update throughput with material albedo
+			throughput *= material.albedo;
+
+			// Russian Roulette termination
+			float p = max(throughput.r, max(throughput.g, throughput.b));
+			if (b > 3 && RandomFloat(state) > p) {
+				break; // Terminate path
+			}
+			if (p < 1.0) throughput /= p; // Compensate for terminated paths
+
+			// Prepare for next bounce
+			vec3 normal = normalize(payload.worldNormal);
+
+			// Calculate new ray direction based on material properties
+			vec3 reflectDir = reflect(ray.direction, normal);
+			vec3 diffuseDir = normalize(normal + RandomInUnitSphere(state));
+
+			// Use metallic to choose between reflection and diffuse
+			vec3 newDir;
+			if (RandomFloat(state) < material.metallic) {
+				// Reflective path with roughness perturbation
+				newDir = normalize(mix(reflectDir, normalize(reflectDir + material.roughness * RandomInUnitSphere(state)), material.roughness));
+			} else {
+				// Diffuse path
+				newDir = diffuseDir;
+			}
+
+			// Set up new ray for next bounce
+			ray.origin = payload.worldPosition + normal * 0.001; // Offset to avoid self-intersection
+			ray.direction = newDir;
 		}
-
-		res += clamp(bounce_res, vec3(0.0), vec3(1.0));
 	}
 
-	FragColor = vec4(res / float(NumberOfSamples), 1.0);
+	// Average samples and apply simple tone mapping
+	finalColor = finalColor / float(NumberOfSamples);
+
+	// Simple Reinhard tone mapping
+	finalColor = finalColor / (finalColor + vec3(1.0));
+
+	// Gamma correction
+	finalColor = pow(finalColor, vec3(1.0 / 2.2));
+
+	FragColor = vec4(finalColor, 1.0);
 }
 
 Ray GenerateRay() {
-	// Map screen space to NDC
-	vec4 ndc = vec4(aFragCoord * 2.0 - 1.0, -1.0, 1.0); // Using -1 for z (near plane)
+	// aFragCoord is already in NDC space (-1 to 1) from the vertex shader
+	vec4 ndc = vec4(aFragCoord, -1.0, 1.0); // Using -1 for z (near plane)
 
 	// Transform to view space using inverse projection 
 	vec4 viewSpace = ProjectionMatrix * ndc;
@@ -145,88 +199,26 @@ HitPayload TraceRay(Ray r) {
 	closestHit.hitDistance = 1e10;
 	closestHit.materialIndex = -1;
 
-	// Debug: Check our mesh count
-	if (MeshCount == 0 || TriangleCount == 0) {
-		// Debug info - return a hit with red color
-		closestHit.hitDistance = 1.0;
-		closestHit.materialIndex = 1; // Use a material index that causes red 
-		closestHit.worldPosition = r.origin + r.direction;
-		closestHit.worldNormal = vec3(1.0, 0.0, 0.0);
-		return closestHit;
-	}
-
-	Triangle debugTri;
-	debugTri.v0 = vec4(-1.0, -1.0, -3.0, 1.0);
-	debugTri.v1 = vec4(1.0, -1.0, -3.0, 1.0);
-	debugTri.v2 = vec4(0.0, 1.0, -3.0, 1.0);
-	debugTri.normal = vec4(0.0, 0.0, 1.0, 1.0);
-	debugTri.materialIndex = 0;
-
-	float debugDist = 0.0;
-	if (TriangleHit(r, debugTri, 0.001, closestHit.hitDistance, debugDist)) {
-		closestHit.hitDistance = debugDist;
-		closestHit.materialIndex = 0;
-		closestHit.worldPosition = r.origin + r.direction * debugDist;
-		closestHit.worldNormal = debugTri.normal.xyz;
-		// Always return the debug triangle if we hit it
-		return closestHit;
-	}
-
+	// Test mesh bounding boxes first for optimization
 	for (int i = 0; i < MeshCount; i++) {
 		Mesh mesh = Meshes[i];
 		float hitDist = 0.0;
 
-		// ONLY test AABB, skip triangle tests
-		if (AABBHit(r, mesh.minBounds.xyz, mesh.maxBounds.xyz, 0.001, closestHit.hitDistance, hitDist)) {
-			closestHit.hitDistance = hitDist;
-			closestHit.materialIndex = 4; // Special index for mesh AABB
-			closestHit.worldPosition = r.origin + r.direction * hitDist;
-
-			// Simple normal calculation
-			vec3 hitPoint = closestHit.worldPosition;
-			vec3 center = (mesh.minBounds.xyz + mesh.maxBounds.xyz) * 0.5;
-			closestHit.worldNormal = normalize(hitPoint - center);
-
-			// Found a mesh AABB hit, return immediately
-			return closestHit;
-		}
-	}
-
-	if (TriangleCount > 0) {
-		// Sample first 5 triangles at most
-		int samplesToCheck = max(0, TriangleCount);
-
-		for (int i = 0; i < samplesToCheck; i++) {
-			float hitDist = 0.0;
-			if (TriangleHit(r, Triangles[i], 0.001, closestHit.hitDistance, hitDist)) {
-				closestHit.hitDistance = hitDist;
-				closestHit.materialIndex = 5; // Special index for sample triangle
-				closestHit.worldPosition = r.origin + r.direction * hitDist;
-				closestHit.worldNormal = Triangles[i].normal.xyz;
-				// Found a triangle hit, no need to continue
-				return closestHit;
-			}
-		}
-	}
-	// Replace your mesh loop using count uniforms instead of .length()
-	for (int i = 0; i < MeshCount; i++) {
-		Mesh mesh = Meshes[i];
-
-		float hitDist = 0.0;
 		if (!AABBHit(r, mesh.minBounds.xyz, mesh.maxBounds.xyz, 0.001, closestHit.hitDistance, hitDist)) {
-			continue;
+			continue; // Skip if ray doesn't hit bounding box
 		}
 
-		hitDist = 0.0;
+		// Test triangles in this mesh
 		for (int j = 0; j < mesh.triangleCount; j++) {
 			int triIndex = mesh.startTriangleIndex + j;
 			if (triIndex >= TriangleCount) continue; // Bounds check
 
-			if (TriangleHit(r, Triangles[triIndex], 0.001, closestHit.hitDistance, hitDist)) {
-				if (hitDist > 0.0 && hitDist < closestHit.hitDistance) {
-					closestHit.hitDistance = hitDist;
+			float dist = 0.0;
+			if (TriangleHit(r, Triangles[triIndex], 0.001, closestHit.hitDistance, dist)) {
+				if (dist > 0.0 && dist < closestHit.hitDistance) {
+					closestHit.hitDistance = dist;
 					closestHit.materialIndex = Triangles[triIndex].materialIndex;
-					closestHit.worldPosition = r.origin + r.direction * hitDist;
+					closestHit.worldPosition = r.origin + r.direction * dist;
 					closestHit.worldNormal = Triangles[triIndex].normal.xyz;
 				}
 			}
@@ -259,29 +251,19 @@ bool TriangleHit(Ray r, Triangle tri, float tMin, float tMax, out float hitDist)
 
 bool AABBHit(Ray r, vec3 minBounds, vec3 maxBounds, float tMin, float tMax, out float hitDist) {
 	// Ultra-simple slab test
-	float txmin = (minBounds.x - r.origin.x) / r.direction.x;
-	float txmax = (maxBounds.x - r.origin.x) / r.direction.x;
-	if (txmin > txmax) { float temp = txmin; txmin = txmax; txmax = temp; }
+	vec3 invDir = 1.0 / r.direction;
+	vec3 t0 = (minBounds - r.origin) * invDir;
+	vec3 t1 = (maxBounds - r.origin) * invDir;
 
-	float tymin = (minBounds.y - r.origin.y) / r.direction.y;
-	float tymax = (maxBounds.y - r.origin.y) / r.direction.y;
-	if (tymin > tymax) { float temp = tymin; tymin = tymax; tymax = temp; }
+	vec3 tmin = min(t0, t1);
+	vec3 tmax = max(t0, t1);
 
-	if (txmin > tymax || tymin > txmax) return false;
-	float tmin = max(txmin, tymin);
-	float tmax = min(txmax, tymax);
+	float tenter = max(tmin.x, max(tmin.y, tmin.z));
+	float texit = min(tmax.x, min(tmax.y, tmax.z));
 
-	float tzmin = (minBounds.z - r.origin.z) / r.direction.z;
-	float tzmax = (maxBounds.z - r.origin.z) / r.direction.z;
-	if (tzmin > tzmax) { float temp = tzmin; tzmin = tzmax; tzmax = temp; }
+	if (tenter > texit || texit < 0) return false;
 
-	if (tmin > tzmax || tzmin > tmax) return false;
-	tmin = max(tmin, tzmin);
-	tmax = min(tmax, tzmax);
-
-	if (tmin < 0 && tmax < 0) return false;  // Box is behind the ray
-
-	hitDist = (tmin >= 0) ? tmin : tmax;  // Use tmax when inside the box
+	hitDist = (tenter > 0) ? tenter : texit;
 	return (hitDist >= tMin && hitDist <= tMax);
 }
 
@@ -295,4 +277,34 @@ HitPayload Miss(Ray r) {
 // Generate a pseudo-random vector using a noise texture
 vec3 RandomVector(vec2 uv) {
 	return texture(RandomTexture, uv).rgb * 2.0 - 1.0;
+}
+
+// PCG hash function for random number generation
+uint pcg_hash(uint seed) {
+	uint state = seed * 747796405u + 2891336453u;
+	uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+	return (word >> 22u) ^ word;
+}
+
+// Generate random float between 0 and 1
+float RandomFloat(inout uint state) {
+	state = pcg_hash(state);
+	return float(state) / 4294967295.0;
+}
+
+// Generate random unit vector
+vec3 RandomInUnitSphere(inout uint state) {
+	float z = RandomFloat(state) * 2.0 - 1.0;
+	float t = RandomFloat(state) * 2.0 * 3.14159265;
+	float r = sqrt(max(0.0, 1.0 - z * z));
+	float x = r * cos(t);
+	float y = r * sin(t);
+	return vec3(x, y, z);
+}
+
+// Simple sky color function for environment lighting
+vec3 GetEnvironmentColor(vec3 dir) {
+	// Simple gradient sky
+	float t = 0.5 * (dir.y + 1.0);
+	return mix(vec3(1.0), vec3(0.5, 0.7, 1.0), t) * 0.5;
 }

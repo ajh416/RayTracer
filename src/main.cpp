@@ -24,15 +24,28 @@
 
 // GPU STUFF NEEDS TO BE REFACTORED INTO SEPARATE FILE
 struct TriangleGPU {
-	glm::vec4 v0, v1, v2;  // Use vec4 instead of vec3 for proper alignment
-	glm::vec4 normal;      // Use vec4 instead of vec3
-	int materialIndex;
+	glm::vec4 v0;   // 16 bytes
+	glm::vec4 v1;   // 16 bytes
+	glm::vec4 v2;   // 16 bytes
+	glm::vec4 normal; // 16 bytes
+	int materialIndex; // 4 bytes
+	int padding[3];  // 12 bytes to ensure 16-byte alignment
 };
 
 struct MeshGPU {
 	glm::vec4 minBounds, maxBounds;  // Use vec4 instead of vec3
 	int startTriangleIndex;
 	int triangleCount;
+	int padding[2];  // Add padding for alignment
+};
+
+struct MaterialGPU {
+	glm::vec3 Albedo;
+	float Roughness;
+	glm::vec3 EmissionColor;
+	float EmissionStrength;
+	float Metallic;
+	float padding[3]; // Padding to ensure 16-byte alignment
 };
 
 void DisplayObjects(Scene& scene);
@@ -42,7 +55,7 @@ void SetupFramebuffer();
 
 uint32_t quadVAO, quadVBO;
 uint32_t fbo, fboTexture, rbo;
-uint32_t ssboTriangles, ssboMeshes;
+uint32_t ssboTriangles, ssboMeshes, ssboMaterials;
 
 int main() {
 	constexpr int image_width = 1280;
@@ -65,7 +78,9 @@ int main() {
 	// ====================================================================
 
 	// scene.Objects.push_back(new Sphere({ -3.0f, 7.0f, -10.0f }, 5.0f, 0));
-	scene.Objects.push_back(new Mesh("../ico_sphere.wavefront", 1));
+	scene.Objects.push_back(new Mesh("../ico_sphere.wavefront", 0));
+	scene.Objects.push_back(new Mesh("../monkey.obj", 1));
+	dynamic_cast<Mesh*>(scene.Objects.back())->MoveTo({2.0f, 0.0f, -2.0f});
 
 	// Vector of materials accessed using indices
 	// look at this fancy syntax!
@@ -106,6 +121,7 @@ int main() {
 			auto mesh = dynamic_cast<Mesh*>(object);
 			int startTriangleIndex = triangles.size();
 			int triangleCount = mesh->MeshTriangles.size();
+			printf("Mesh has %d triangles\n", triangleCount);
 			meshes.push_back({
 					.minBounds = glm::vec4(mesh->BoundingBox.m_Box.pMin, 1.0f),
 					.maxBounds = glm::vec4(mesh->BoundingBox.m_Box.pMax, 1.0f),
@@ -124,17 +140,23 @@ int main() {
 		}
 	}
 
+	std::vector<MaterialGPU> materials;
+	materials.reserve(scene.Materials.size());
+	for (auto& material : scene.Materials) {
+		materials.push_back({
+				.Albedo = material.Albedo,
+				.Roughness = material.Roughness,
+				.EmissionColor = material.EmissionColor,
+				.EmissionStrength = material.EmissionStrength,
+				.Metallic = material.Metallic
+				});
+	}
+
 	shader.Bind();
 
 	// Debug output
 	std::cout << "Triangle count: " << triangles.size() << std::endl;
 	std::cout << "Mesh count: " << meshes.size() << std::endl;
-
-	// Ensure buffers are explicitly padded to match GLSL std430 layout
-	// Print first few triangles for debugging
-	if (!triangles.empty()) {
-		std::cout << "First triangle: v0(" << triangles[0].v0.x << "," << triangles[0].v0.y << "," << triangles[0].v0.z << ")" << std::endl;
-	}
 
 	// Upload triangles - Clear any previous buffer
 	glDeleteBuffers(1, &ssboTriangles);
@@ -154,12 +176,21 @@ int main() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboMeshes);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
 
+	// Upload materials - Create buffer for materials
+	glDeleteBuffers(1, &ssboMaterials);
+	glGenBuffers(1, &ssboMaterials);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboMaterials);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, materials.size() * sizeof(MaterialGPU), materials.data(), GL_DYNAMIC_DRAW);
+	// Bind to index 2
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssboMaterials);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
+
 	shader.Unbind();
 
 	glViewport(0, 0, img.Width, img.Height);
 	while (!window.ShouldClose()) {
 		static int samples = 1;
-		static int bounces = 5;
+		static int bounces = 3;
 		static bool accumulate = true;
 
 		//renderer.Render(scene, cam);
@@ -180,12 +211,28 @@ int main() {
 		shader.SetUniform3f("CameraPosition", cam.GetPosition());
 		shader.SetUniform1i("NumberOfSamples", samples);
 		shader.SetUniform1i("NumberOfBounces", bounces);
-		// Set length uniforms - so you don't rely on .length()
+		shader.SetUniform1f("Time", static_cast<float>(glfwGetTime())); // Add time for random seed
 		shader.SetUniform1i("TriangleCount", triangles.size());
 		shader.SetUniform1i("MeshCount", meshes.size());
 
+		// Update materials buffer with any changes from UI
+		std::vector<MaterialGPU> updatedMaterials;
+		updatedMaterials.reserve(scene.Materials.size());
+		for (auto& material : scene.Materials) {
+			updatedMaterials.push_back({
+					.Albedo = material.Albedo,
+					.Roughness = material.Roughness,
+					.EmissionColor = material.EmissionColor,
+					.EmissionStrength = material.EmissionStrength,
+					.Metallic = material.Metallic
+					});
+		}
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboMaterials);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, updatedMaterials.size() * sizeof(MaterialGPU), updatedMaterials.data(), GL_DYNAMIC_DRAW);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssboMaterials);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboTriangles);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboMeshes);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssboMaterials);
 		glBindVertexArray(quadVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
