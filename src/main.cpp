@@ -50,17 +50,16 @@ struct MaterialGPU {
 
 void DisplayObjects(Scene& scene);
 void DisplayMaterials(Scene& scene);
-void SetupFullscreenQuad();
-void SetupFramebuffer();
-
-uint32_t quadVAO, quadVBO;
-uint32_t fbo, fboTexture, rbo;
-uint32_t ssboTriangles, ssboMeshes, ssboMaterials;
 
 int main() {
 	constexpr int image_width = 1280;
 	constexpr float aspect_ratio = 16.0f / 9.0f;
 	constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
+
+	// window must be created before using any OpenGL
+	Window window(2000, 1100, "RayTracer");
+	// initialize input system
+	Input::Init(window.GetWindow());
 
 	Renderer renderer;
 
@@ -97,154 +96,32 @@ int main() {
 				.EmissionColor = glm::vec3(0.0f, 0.0f, 0.0f),
 				.EmissionStrength = 0.0f}));
 
-	//renderer.SetImage(img);
-	//renderer.Render(scene, cam);
+	renderer.SetImage(img);
+	renderer.Render(scene, cam);
 
-	// window must be created before using any OpenGL
-	Window window(2000, 1100, "RayTracer");
-	// initialize input system
-	Input::Init(window.GetWindow());
-	// create texture with image data
-	// ideally we'll use a framebuffer or texture when rendering using gpu, but this works for cpu
-	//Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
-
-	SetupFullscreenQuad();
-	SetupFramebuffer();
-	Shader shader("../src/shaders/vertex.glsl", "../src/shaders/fragment.glsl");
 	double frametime = 0.0;
 	double lastTime = glfwGetTime();
-
-	std::vector<TriangleGPU> triangles;
-	std::vector<MeshGPU> meshes;
-	for (auto& object : scene.Objects) {
-		if (object->GetType() == ObjectType::Mesh) {
-			auto mesh = dynamic_cast<Mesh*>(object);
-			int startTriangleIndex = triangles.size();
-			int triangleCount = mesh->MeshTriangles.size();
-			printf("Mesh has %d triangles\n", triangleCount);
-			meshes.push_back({
-					.minBounds = glm::vec4(mesh->BoundingBox.m_Box.pMin, 1.0f),
-					.maxBounds = glm::vec4(mesh->BoundingBox.m_Box.pMax, 1.0f),
-					.startTriangleIndex = startTriangleIndex,
-					.triangleCount = triangleCount
-					});
-			for (auto& tri : mesh->MeshTriangles) {
-				triangles.push_back({
-						.v0 = glm::vec4(tri.Vertices[0], 1.0f),
-						.v1 = glm::vec4(tri.Vertices[1], 1.0f),
-						.v2 = glm::vec4(tri.Vertices[2], 1.0f),
-						.normal = glm::vec4(tri.Normal, 0.0f),   // 0 for directions
-						.materialIndex = tri.MaterialIndex
-						});
-			}
-		}
-	}
-
-	std::vector<MaterialGPU> materials;
-	materials.reserve(scene.Materials.size());
-	for (auto& material : scene.Materials) {
-		materials.push_back({
-				.Albedo = material.Albedo,
-				.Roughness = material.Roughness,
-				.EmissionColor = material.EmissionColor,
-				.EmissionStrength = material.EmissionStrength,
-				.Metallic = material.Metallic
-				});
-	}
-
-	shader.Bind();
-
-	// Debug output
-	std::cout << "Triangle count: " << triangles.size() << std::endl;
-	std::cout << "Mesh count: " << meshes.size() << std::endl;
-
-	// Upload triangles - Clear any previous buffer
-	glDeleteBuffers(1, &ssboTriangles);
-	glGenBuffers(1, &ssboTriangles);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboTriangles);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, triangles.size() * sizeof(TriangleGPU), triangles.data(), GL_STATIC_DRAW);
-	// This is critical - bind to index 0
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboTriangles);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
-
-	// Upload meshes - Clear any previous buffer
-	glDeleteBuffers(1, &ssboMeshes);
-	glGenBuffers(1, &ssboMeshes);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboMeshes);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, meshes.size() * sizeof(MeshGPU), meshes.data(), GL_STATIC_DRAW);
-	// This is critical - bind to index 1
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboMeshes);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
-
-	// Upload materials - Create buffer for materials
-	glDeleteBuffers(1, &ssboMaterials);
-	glGenBuffers(1, &ssboMaterials);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboMaterials);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, materials.size() * sizeof(MaterialGPU), materials.data(), GL_DYNAMIC_DRAW);
-	// Bind to index 2
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssboMaterials);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
-
-	shader.Unbind();
 
 	glViewport(0, 0, img.Width, img.Height);
 	while (!window.ShouldClose()) {
 		static int samples = 1;
 		static int bounces = 3;
 		static bool accumulate = true;
-
-		//renderer.Render(scene, cam);
-		//tex.SetData((uint8_t*)img.Data);
+		static bool gpu = true;
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		shader.Bind();
-		// vertex uniforms
+		renderer.Render(scene, cam);
 
-		// fragment uniforms
-		shader.SetUniformMat4f("ViewMatrix", cam.GetInverseView());
-		shader.SetUniformMat4f("ProjectionMatrix", cam.GetInverseProjection());
-		shader.SetUniform3f("CameraPosition", cam.GetPosition());
-		shader.SetUniform1i("NumberOfSamples", samples);
-		shader.SetUniform1i("NumberOfBounces", bounces);
-		shader.SetUniform1f("Time", static_cast<float>(glfwGetTime())); // Add time for random seed
-		shader.SetUniform1i("TriangleCount", triangles.size());
-		shader.SetUniform1i("MeshCount", meshes.size());
-
-		// Update materials buffer with any changes from UI
-		std::vector<MaterialGPU> updatedMaterials;
-		updatedMaterials.reserve(scene.Materials.size());
-		for (auto& material : scene.Materials) {
-			updatedMaterials.push_back({
-					.Albedo = material.Albedo,
-					.Roughness = material.Roughness,
-					.EmissionColor = material.EmissionColor,
-					.EmissionStrength = material.EmissionStrength,
-					.Metallic = material.Metallic
-					});
-		}
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboMaterials);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, updatedMaterials.size() * sizeof(MaterialGPU), updatedMaterials.data(), GL_DYNAMIC_DRAW);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssboMaterials);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboTriangles);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboMeshes);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssboMaterials);
-		glBindVertexArray(quadVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		shader.Unbind();
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		window.BeginImGui();
 
 		ImGui::Begin("Settings");
 		ImGui::SliderInt("Samples", &samples, 1, 100);
 		ImGui::SliderInt("Bounces", &bounces, 0, 100);
 		ImGui::Checkbox("Accumulate", &accumulate);
+		ImGui::Checkbox("GPU", &gpu);
+		renderer.SetRenderGPU(gpu);
 		ImGui::Text("Frame (accumulation): %d", renderer.GetFrameIndex());
 		ImGui::Text("Frame Time: %.3fms", frametime * 1000);
 		ImGui::End();
@@ -262,13 +139,13 @@ int main() {
 		DisplayMaterials(scene);
 
 		ImGui::Begin("Image");
-		ImGui::Image((uintptr_t)fboTexture, ImVec2((float)img.Width, (float)img.Height), ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::Image((uintptr_t)renderer.GetRenderID(), ImVec2((float)img.Width, (float)img.Height), ImVec2(0, 1), ImVec2(1, 0));
 		ImGui::End();
 
 		window.EndImGui();
 		window.Update();
 		if (cam.Update()) {
-			//renderer.ResetFrameIndex();
+			renderer.ResetFrameIndex();
 		}
 		frametime = glfwGetTime() - lastTime;
 		lastTime = glfwGetTime();
@@ -338,60 +215,4 @@ void DisplayMaterials(Scene& scene) {
 		i++;
 	}
 	ImGui::End();
-}
-
-void SetupFullscreenQuad() {
-	float quadVertices[] = {
-		// Positions   // Texture Coords
-		-1.0f,  1.0f,  0.0f, 1.0f, // Top-left
-		-1.0f, -1.0f,  0.0f, 0.0f, // Bottom-left
-		1.0f, -1.0f,  1.0f, 0.0f, // Bottom-right
-
-		-1.0f,  1.0f,  0.0f, 1.0f, // Top-left
-		1.0f, -1.0f,  1.0f, 0.0f, // Bottom-right
-		1.0f,  1.0f,  1.0f, 1.0f  // Top-right
-	};
-
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
-	glBindVertexArray(quadVAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-}
-
-void SetupFramebuffer() {
-	int screenWidth = 1280;
-	int screenHeight = screenWidth / (16.0f / 9.0f);
-	glGenFramebuffers(1, &fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-	// Create texture to render into
-	glGenTextures(1, &fboTexture);
-	glBindTexture(GL_TEXTURE_2D, fboTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboTexture, 0);
-
-	// Create Renderbuffer Object (RBO) for depth/stencil
-	glGenRenderbuffers(1, &rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		std::cerr << "Framebuffer is not complete!" << std::endl;
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

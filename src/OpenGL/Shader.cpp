@@ -7,6 +7,11 @@
 Shader::Shader(const char *vertexPath, const char *fragmentPath) {
 	const char *vertexSource = ParseShader(vertexPath);
 	const char *fragmentSource = ParseShader(fragmentPath);
+
+	if (vertexSource == NULL and fragmentSource == NULL) {
+		printf("Failed opening shaders\n");
+		return;
+	}
 	const unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexSource, nullptr);
 	glCompileShader(vertexShader);

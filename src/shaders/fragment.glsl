@@ -14,13 +14,15 @@ uniform int TriangleCount;
 uniform int MeshCount;
 uniform float Time; // For random seed
 
+// CPU to GPU struct
 struct Triangle {
 	vec4 v0, v1, v2;  // Use vec4 instead of vec3
 	vec4 normal;      // Use vec4 instead of vec3
 	int materialIndex;
-	int padding[3];
+	int padding[3];   // Add padding for alignment
 };
 
+// CPU to GPU struct
 struct Mesh {
 	vec4 minBounds, maxBounds;  // Use vec4 instead of vec3
 	int startTriangleIndex;
@@ -28,11 +30,7 @@ struct Mesh {
 	int padding[2];  // Add padding for alignment
 };
 
-struct Ray {
-	vec3 origin;
-	vec3 direction;
-};
-
+// CPU to GPU struct
 struct Material {
 	vec3 albedo;
 	float roughness;
@@ -40,6 +38,11 @@ struct Material {
 	float emissionStrength;
 	float metallic;
 	float padding[3];  // Add padding for alignment
+};
+
+struct Ray {
+	vec3 origin;
+	vec3 direction;
 };
 
 struct HitPayload {
