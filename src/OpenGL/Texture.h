@@ -1,3 +1,5 @@
+#pragma once
+
 class Texture {
       public:
         Texture(int width, int height, unsigned char* data = nullptr);

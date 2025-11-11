@@ -27,9 +27,21 @@ bool Mesh::Hit(const Ray& r, float tMin, float tMax, float& hitDistance) const
 }
 
 void Mesh::MoveTo(const glm::vec3& newOrigin) {
+	// Calculate offset
+	glm::vec3 offset = newOrigin - Origin;
+
+	// Move all triangles by offset
 	for (auto& tri : MeshTriangles) {
-		tri.MoveTo(newOrigin);
+		for (int i = 0; i < 3; i++) {
+			tri.Vertices[i] += offset;
+		}
+		tri.Origin += offset;
 	}
+
+	// Update origin
+	Origin = newOrigin;
+
+	// Recalculate bounding box after moving
 	CalculateBoundingBox();
 }
 
@@ -58,9 +70,9 @@ bool Mesh::LoadFromOBJ(const std::string& filename) {
 			iss >> v1 >> v2 >> v3;
 
 			// Extract just the vertex indices (before the first '/')
-                	triangle.x = std::stoi(v1.substr(0, v1.find('/'))) - 1;
-                	triangle.y = std::stoi(v2.substr(0, v2.find('/'))) - 1;
-                	triangle.z = std::stoi(v3.substr(0, v3.find('/'))) - 1;
+			triangle.x = std::stoi(v1.substr(0, v1.find('/'))) - 1;
+			triangle.y = std::stoi(v2.substr(0, v2.find('/'))) - 1;
+			triangle.z = std::stoi(v3.substr(0, v3.find('/'))) - 1;
 
 			Triangles.push_back(triangle);
 		}
@@ -70,7 +82,7 @@ bool Mesh::LoadFromOBJ(const std::string& filename) {
 	for (const auto& tri : Triangles) {
 		if (tri.x >= Vertices.size() || tri.y >= Vertices.size() || tri.z >= Vertices.size()) {
 			fprintf(stderr, "Index out of bounds in OBJ file: Vertices[%d], Vertices[%d], Vertices[%d] | Vertices.size() == %zu", 
-				(int)tri.x, (int)tri.y, (int)tri.z, Vertices.size());
+					(int)tri.x, (int)tri.y, (int)tri.z, Vertices.size());
 			return false;
 		}
 		glm::vec3 v[3] = { Vertices[(int)tri.x], Vertices[(int)tri.y], Vertices[(int)tri.z] };
@@ -83,17 +95,33 @@ bool Mesh::LoadFromOBJ(const std::string& filename) {
 }
 
 void Mesh::CalculateBoundingBox() {
-	glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
-	glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
-	for (const auto& vert : Vertices) {
-		min.x = std::min(min.x, vert.x);
-		min.y = std::min(min.y, vert.y);
-		min.z = std::min(min.z, vert.z);
+	// Start with extreme values
+	glm::vec3 min(std::numeric_limits<float>::max());
+	glm::vec3 max(std::numeric_limits<float>::lowest());
 
-		max.x = std::max(max.x, vert.x);
-		max.y = std::max(max.y, vert.y);
-		max.z = std::max(max.z, vert.z);
+	// Check ALL vertices in all triangles
+	for (const auto& tri : MeshTriangles) {
+		for (int i = 0; i < 3; i++) {
+			// Expand AABB to include each vertex
+			min.x = std::min(min.x, tri.Vertices[i].x);
+			min.y = std::min(min.y, tri.Vertices[i].y);
+			min.z = std::min(min.z, tri.Vertices[i].z);
+
+			max.x = std::max(max.x, tri.Vertices[i].x);
+			max.y = std::max(max.y, tri.Vertices[i].y);
+			max.z = std::max(max.z, tri.Vertices[i].z);
+		}
 	}
+
+	// Check for empty mesh
+	if (MeshTriangles.empty()) {
+		min = glm::vec3(0.0f);
+		max = glm::vec3(0.0f);
+	}
+
+	// Create bounding box
 	BoundingBox = Box(Bounds3<float>(min, max), std::move(MaterialIndex));
-	Origin = BoundingBox.m_Box.Center();
+
+	// Update origin to center of box
+	Origin = (min + max) * 0.5f;
 }

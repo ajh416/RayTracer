@@ -13,6 +13,7 @@
 
 #include "OpenGL/Texture.h"
 #include "OpenGL/Window.h"
+#include "OpenGL/Shader.h"
 
 #include <imgui.h>
 
@@ -21,6 +22,32 @@
 
 // TODO: TRIANGLE MESHES AND PERHAPS GPU
 
+// GPU STUFF NEEDS TO BE REFACTORED INTO SEPARATE FILE
+struct TriangleGPU {
+	glm::vec4 v0;   // 16 bytes
+	glm::vec4 v1;   // 16 bytes
+	glm::vec4 v2;   // 16 bytes
+	glm::vec4 normal; // 16 bytes
+	int materialIndex; // 4 bytes
+	int padding[3];  // 12 bytes to ensure 16-byte alignment
+};
+
+struct MeshGPU {
+	glm::vec4 minBounds, maxBounds;  // Use vec4 instead of vec3
+	int startTriangleIndex;
+	int triangleCount;
+	int padding[2];  // Add padding for alignment
+};
+
+struct MaterialGPU {
+	glm::vec3 Albedo;
+	float Roughness;
+	glm::vec3 EmissionColor;
+	float EmissionStrength;
+	float Metallic;
+	float padding[3]; // Padding to ensure 16-byte alignment
+};
+
 void DisplayObjects(Scene& scene);
 void DisplayMaterials(Scene& scene);
 
@@ -28,6 +55,11 @@ int main() {
 	constexpr int image_width = 1280;
 	constexpr float aspect_ratio = 16.0f / 9.0f;
 	constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
+
+	// window must be created before using any OpenGL
+	Window window(2000, 1100, "RayTracer");
+	// initialize input system
+	Input::Init(window.GetWindow());
 
 	Renderer renderer;
 
@@ -45,9 +77,9 @@ int main() {
 	// ====================================================================
 
 	// scene.Objects.push_back(new Sphere({ -3.0f, 7.0f, -10.0f }, 5.0f, 0));
-	scene.Objects.push_back(new Mesh("../../../ico_sphere.wavefront", 0));
-
-	scene.Objects.push_back(new Plane({0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, 1));
+	scene.Objects.push_back(new Mesh("../ico_sphere.wavefront", 0));
+	scene.Objects.push_back(new Mesh("../monkey.obj", 1));
+	dynamic_cast<Mesh*>(scene.Objects.back())->MoveTo({2.0f, 0.0f, -2.0f});
 
 	// Vector of materials accessed using indices
 	// look at this fancy syntax!
@@ -67,38 +99,38 @@ int main() {
 	renderer.SetImage(img);
 	renderer.Render(scene, cam);
 
-	// window must be created before using any OpenGL
-	Window window(2000, 1100, "RayTracer");
-	// initialize input system
-	Input::Init(window.GetWindow());
-	// create texture with image data
-	// ideally we'll use a framebuffer or texture when rendering using gpu, but this works for cpu
-	Texture tex(img.Width, img.Height, (uint8_t *)img.Data);
 	double frametime = 0.0;
 	double lastTime = glfwGetTime();
 
+	glViewport(0, 0, img.Width, img.Height);
 	while (!window.ShouldClose()) {
+		static int samples = 1;
+		static int bounces = 3;
+		static bool accumulate = true;
+		static bool gpu = true;
+
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		renderer.Render(scene, cam);
-		tex.SetData((uint8_t*)img.Data);
 
 		window.BeginImGui();
 
 		ImGui::Begin("Settings");
-		static int samples = 1;
 		ImGui::SliderInt("Samples", &samples, 1, 100);
-		static int bounces = 5;
 		ImGui::SliderInt("Bounces", &bounces, 0, 100);
-		static bool accumulate = true;
 		ImGui::Checkbox("Accumulate", &accumulate);
+		ImGui::Checkbox("GPU", &gpu);
+		renderer.SetRenderGPU(gpu);
 		ImGui::Text("Frame (accumulation): %d", renderer.GetFrameIndex());
 		ImGui::Text("Frame Time: %.3fms", frametime * 1000);
 		ImGui::End();
 
 		ImGui::Begin("Debug");
-		ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", cam.GetPosition().x, cam.GetPosition().y, cam.GetPosition().z);
+		auto pos = cam.GetPosition();
+		auto dir = cam.GetForwardDirection();
+		ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", pos.x, pos.y, pos.z);
+		ImGui::Text("Camera Direction: (%.2f, %.2f, %.2f)", dir.x, dir.y, dir.z);
 		ImGui::End();
 
 		renderer.SetSettings({ .NumberOfSamples = samples, .NumberOfBounces = bounces, .Accumulate = accumulate });
@@ -107,7 +139,7 @@ int main() {
 		DisplayMaterials(scene);
 
 		ImGui::Begin("Image");
-		ImGui::Image((uintptr_t)tex.GetRendererID(), ImVec2((float)img.Width, (float)img.Height), ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::Image((uintptr_t)renderer.GetRenderID(), ImVec2((float)img.Width, (float)img.Height), ImVec2(0, 1), ImVec2(1, 0));
 		ImGui::End();
 
 		window.EndImGui();

@@ -7,6 +7,11 @@
 Shader::Shader(const char *vertexPath, const char *fragmentPath) {
 	const char *vertexSource = ParseShader(vertexPath);
 	const char *fragmentSource = ParseShader(fragmentPath);
+
+	if (vertexSource == NULL and fragmentSource == NULL) {
+		printf("Failed opening shaders\n");
+		return;
+	}
 	const unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexSource, nullptr);
 	glCompileShader(vertexShader);
@@ -92,7 +97,11 @@ void Shader::SetUniformMat4f(const char* name, const glm::mat4& value) {
 
 // could be improved with caching (e.g. a hash table)
 int Shader::GetUniformLocation(const char* name) {
-	return glGetUniformLocation(renderer_id, name);
+	if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end()) {
+		return m_UniformLocationCache[name];
+	}
+	m_UniformLocationCache[name] = glGetUniformLocation(renderer_id, name);
+	return m_UniformLocationCache[name];
 }
 
 const char* Shader::ParseShader(const char* filePath) {
