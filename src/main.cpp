@@ -45,7 +45,7 @@ int main() {
 	// ====================================================================
 
 	// scene.Objects.push_back(new Sphere({ -3.0f, 7.0f, -10.0f }, 5.0f, 0));
-	scene.Objects.push_back(new Mesh("../ico_sphere.wavefront", 0));
+	scene.Objects.push_back(new Mesh("../../../ico_sphere.wavefront", 0));
 
 	scene.Objects.push_back(new Plane({0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, 1));
 

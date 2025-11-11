@@ -27,7 +27,7 @@ void Renderer::Render(const Scene &scene, Camera &cam) {
 
 #define MT 1
 #if MT
-	// A good bit faster than using my 8 thread version below
+	// A good bit faster than using my previous 8 thread method
 	// This (sometimes) doesn't work on linux apparently
 	// something something libtbb
 	std::for_each(std::execution::par_unseq, m_ImageVerticalIter.begin(), m_ImageVerticalIter.end(), [this](uint32_t y) {

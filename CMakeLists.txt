@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 
 project(RayTracer VERSION 0.1
 	DESCRIPTION "GPU Ray Tracer"
@@ -41,13 +41,12 @@ target_include_directories(RayTracer PRIVATE src/ libs/ libs/glad/include/ libs/
 # Set C++ standard to 20
 target_compile_features(RayTracer PRIVATE cxx_std_20)
 
-# Set the warning level and optimization level, no optimizations leads to VERY slow frames
-target_compile_options(RayTracer PRIVATE -Wall -O2)
-
 # Set the operating system specific defines
 if (WIN32)
+	target_compile_options(RayTracer PRIVATE -Wall)
 	target_compile_definitions(RayTracer PRIVATE RT_WINDOWS)
 else()
+	target_compile_options(RayTracer PRIVATE -Wall -O2)
 	# used by the stl for multithreading on ubuntu (why? linux as a whole?)
 	target_link_libraries(RayTracer PRIVATE -ltbb)
 	target_compile_definitions(RayTracer PRIVATE RT_LINUX)
