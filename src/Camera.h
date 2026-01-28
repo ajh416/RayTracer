@@ -13,6 +13,8 @@ public:
 
 	bool Update();
 
+	void Resize(int width, int height);
+
 	void RecalculateRayDirections();
 
 	glm::vec3 GetRayDirection(glm::vec2&& coord);

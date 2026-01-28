@@ -25,6 +25,18 @@ Camera::Camera(int image_width, float aspect_ratio, glm::vec3 origin)
 	RecalculateRayDirections();
 }
 
+void Camera::Resize(int width, int height) {
+	if (width == m_Width && height == m_Height)
+		return;
+
+	m_Width = width;
+	m_Height = height;
+	m_AspectRatio = static_cast<float>(width) / static_cast<float>(height);
+
+	CalculateProjectionMatrix();
+	RecalculateRayDirections();
+}
+
 bool Camera::Update() {
 	glm::vec2 mousePos = Input::GetMousePosition();
 	glm::vec2 delta = (mousePos - m_LastMousePosition) * 0.002f;

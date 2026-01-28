@@ -78,11 +78,14 @@ void Renderer::RenderGPU(const Scene& scene, const Camera& cam) {
 		m_GPUSetup = true;
 	}
 
+	// Check if resize is needed
+	if (m_Image && (m_Image->Width != m_GPUTextureWidth || m_Image->Height != m_GPUTextureHeight)) {
+		ResizeGPUTextures(m_Image->Width, m_Image->Height);
+	}
+
 	glBindFramebuffer(GL_FRAMEBUFFER, m_Framebuffer);
-	//glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glViewport(0, 0, m_GPUTextureWidth, m_GPUTextureHeight);
 	m_Shader.Bind();
-	// vertex uniforms
 
 	// fragment uniforms
 	m_Shader.SetUniformMat4f("ViewMatrix", cam.GetInverseView());
@@ -90,9 +93,21 @@ void Renderer::RenderGPU(const Scene& scene, const Camera& cam) {
 	m_Shader.SetUniform3f("CameraPosition", cam.GetPosition());
 	m_Shader.SetUniform1i("NumberOfSamples", m_Settings.NumberOfSamples);
 	m_Shader.SetUniform1i("NumberOfBounces", m_Settings.NumberOfBounces);
-	m_Shader.SetUniform1f("Time", static_cast<float>(glfwGetTime())); // Add time for random seed
+	m_Shader.SetUniform1f("Time", static_cast<float>(glfwGetTime()));
 	m_Shader.SetUniform1i("TriangleCount", m_TriangleSize);
 	m_Shader.SetUniform1i("MeshCount", m_MeshSize);
+	m_Shader.SetUniform1i("FrameIndex", m_FrameIndex);
+	m_Shader.SetUniform1i("Accumulate", m_Settings.Accumulate ? 1 : 0);
+
+	// Clear accumulation texture on first frame
+	if (m_FrameIndex == 1) {
+		glBindTexture(GL_TEXTURE_2D, m_AccumulationTexture);
+		glClearTexImage(m_AccumulationTexture, 0, GL_RGBA, GL_FLOAT, nullptr);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	// Bind accumulation texture as image for read/write
+	glBindImageTexture(0, m_AccumulationTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 	// Update materials buffer with any changes from UI
 	std::vector<MaterialGPU> updatedMaterials;
@@ -114,10 +129,17 @@ void Renderer::RenderGPU(const Scene& scene, const Camera& cam) {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_MaterialSSBO);
 	glBindVertexArray(m_QuadVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	glBindVertexArray(0);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	m_Shader.Unbind();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Increment frame index for accumulation
+	if (m_Settings.Accumulate)
+		m_FrameIndex++;
+	else
+		m_FrameIndex = 1;
 }
 
 void Renderer::SetImage(Image &image) {
@@ -240,9 +262,11 @@ void Renderer::SetupGPUBuffers(const Scene &scene) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	// TODO: fix
-	int screenWidth = 1280;
-	int screenHeight = screenWidth / (16.0f / 9.0f);
+	// Use image dimensions for GPU textures
+	m_GPUTextureWidth = m_Image ? m_Image->Width : 1280;
+	m_GPUTextureHeight = m_Image ? m_Image->Height : 720;
+	int screenWidth = m_GPUTextureWidth;
+	int screenHeight = m_GPUTextureHeight;
 	glGenFramebuffers(1, &m_Framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_Framebuffer);
 
@@ -265,6 +289,14 @@ void Renderer::SetupGPUBuffers(const Scene &scene) {
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Create accumulation texture (RGBA32F for HDR accumulation)
+	glGenTextures(1, &m_AccumulationTexture);
+	glBindTexture(GL_TEXTURE_2D, m_AccumulationTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	std::vector<TriangleGPU> triangles;
 	std::vector<MeshGPU> meshes;
@@ -335,4 +367,32 @@ void Renderer::SetupGPUBuffers(const Scene &scene) {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
 	
 	m_Shader.Unbind();
+}
+
+void Renderer::ResizeGPUTextures(uint32_t width, uint32_t height) {
+	if (width == m_GPUTextureWidth && height == m_GPUTextureHeight)
+		return;
+
+	m_GPUTextureWidth = width;
+	m_GPUTextureHeight = height;
+
+	// Resize framebuffer texture
+	glBindTexture(GL_TEXTURE_2D, m_FramebufferTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Resize renderbuffer
+	glBindRenderbuffer(GL_RENDERBUFFER, m_RenderBuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	// Resize accumulation texture
+	glBindTexture(GL_TEXTURE_2D, m_AccumulationTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Reset accumulation since pixel data is now invalid
+	m_FrameIndex = 1;
+
+	printf("Resized GPU textures to %d x %d\n", width, height);
 }

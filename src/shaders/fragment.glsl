@@ -13,6 +13,11 @@ uniform int NumberOfBounces;
 uniform int TriangleCount;
 uniform int MeshCount;
 uniform float Time; // For random seed
+uniform int FrameIndex;
+uniform int Accumulate;
+
+// Accumulation texture for progressive rendering
+layout(rgba32f, binding = 0) uniform image2D AccumulationTexture;
 
 // CPU to GPU struct
 struct Triangle {
@@ -74,46 +79,26 @@ vec3 RandomVector(vec2 uv);
 uint pcg_hash(uint seed);
 float RandomFloat(inout uint state);
 vec3 RandomInUnitSphere(inout uint state);
-vec3 GetEnvironmentColor(vec3 dir);
 
 void main() {
 	// Initialize RNG state based on fragment coordinate and time
 	uint state = uint(aFragCoord.x * 1973.0 + aFragCoord.y * 9277.0 + Time * 26699.0) | 1u;
 
+	// Calculate pixel coordinates for accumulation texture (use gl_FragCoord directly)
+	ivec2 pixelCoord = ivec2(gl_FragCoord.xy);
+
 	vec3 finalColor = vec3(0.0);
-
-	// Debug visualization - remove when path tracing is confirmed working
-	if (NumberOfSamples == 1 && NumberOfBounces == 0) {
-		Ray ray = GenerateRay();
-		HitPayload payload = TraceRay(ray);
-
-		if (payload.hitDistance > 0.0) {
-			if (payload.materialIndex >= 0 && payload.materialIndex < 128) {
-				// Use actual material albedo
-				Material mat = Materials[payload.materialIndex];
-				FragColor = vec4(mat.albedo, 1.0);
-			} else {
-				// Other object - red
-				FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-			}
-		} else {
-			// Miss - sky color
-			FragColor = vec4(GetEnvironmentColor(ray.direction), 1.0);
-		}
-		return;
-	}
 
 	// Full path tracing with multiple bounces
 	for (int s = 0; s < NumberOfSamples; s++) {
 		vec3 throughput = vec3(1.0);  // Light attenuation
 		Ray ray = GenerateRay();
 
-		for (int b = 0; b < NumberOfBounces; b++) {
+		for (int b = 0; b < NumberOfBounces + 1; b++) {
 			HitPayload payload = TraceRay(ray);
 
 			if (payload.hitDistance < 0.0) {
-				// No hit - add environment contribution
-				finalColor += throughput * GetEnvironmentColor(ray.direction);
+				// No hit - break (no environment lighting, only emissive materials)
 				break;
 			}
 
@@ -136,12 +121,10 @@ void main() {
 			// Update throughput with material albedo
 			throughput *= material.albedo;
 
-			// Russian Roulette termination
-			float p = max(throughput.r, max(throughput.g, throughput.b));
-			if (b > 3 && RandomFloat(state) > p) {
-				break; // Terminate path
+			// Early termination (matching CPU behavior)
+			if (length(throughput) < 0.01 && b > 2) {
+				break;
 			}
-			if (p < 1.0) throughput /= p; // Compensate for terminated paths
 
 			// Prepare for next bounce
 			vec3 normal = normalize(payload.worldNormal);
@@ -166,16 +149,31 @@ void main() {
 		}
 	}
 
-	// Average samples and apply simple tone mapping
+	// Average this frame's samples
 	finalColor = finalColor / float(NumberOfSamples);
 
+	// Accumulation using running average (more numerically stable)
+	vec3 displayColor;
+	if (Accumulate == 1 && FrameIndex > 1) {
+		// Read previous average and blend with new sample
+		vec4 prevAvg = imageLoad(AccumulationTexture, pixelCoord);
+		// Running average: newAvg = oldAvg + (newSample - oldAvg) / frameIndex
+		displayColor = prevAvg.rgb + (finalColor - prevAvg.rgb) / float(FrameIndex);
+	} else {
+		// First frame or accumulation disabled - start fresh
+		displayColor = finalColor;
+	}
+
+	// Store the current average (not the sum)
+	imageStore(AccumulationTexture, pixelCoord, vec4(displayColor, 1.0));
+
 	// Simple Reinhard tone mapping
-	finalColor = finalColor / (finalColor + vec3(1.0));
+	displayColor = displayColor / (displayColor + vec3(1.0));
 
 	// Gamma correction
-	finalColor = pow(finalColor, vec3(1.0 / 2.2));
+	displayColor = pow(displayColor, vec3(1.0 / 2.2));
 
-	FragColor = vec4(finalColor, 1.0);
+	FragColor = vec4(displayColor, 1.0);
 }
 
 Ray GenerateRay() {
@@ -303,11 +301,4 @@ vec3 RandomInUnitSphere(inout uint state) {
 	float x = r * cos(t);
 	float y = r * sin(t);
 	return vec3(x, y, z);
-}
-
-// Simple sky color function for environment lighting
-vec3 GetEnvironmentColor(vec3 dir) {
-	// Simple gradient sky
-	float t = 0.5 * (dir.y + 1.0);
-	return mix(vec3(1.0), vec3(0.5, 0.7, 1.0), t) * 0.5;
 }

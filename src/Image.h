@@ -9,6 +9,8 @@ public:
 	Image(unsigned width, unsigned height, unsigned channels);
 	~Image();
 
+	void Resize(unsigned width, unsigned height);
+
 	unsigned int Width, Height, Channels; // width, height, channels
 	uint64_t Size; // size of the image in terms of pixels
 	uint32_t* Data; // this will be freed by stbi during write, although we circumvent with copy and free it ourselves

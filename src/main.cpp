@@ -139,6 +139,18 @@ int main() {
 		DisplayMaterials(scene);
 
 		ImGui::Begin("Image");
+		ImVec2 contentRegion = ImGui::GetContentRegionAvail();
+		uint32_t newWidth = static_cast<uint32_t>(contentRegion.x);
+		uint32_t newHeight = static_cast<uint32_t>(contentRegion.y);
+
+		// Resize if window size changed (with minimum size to avoid issues)
+		if (newWidth > 10 && newHeight > 10 && (newWidth != img.Width || newHeight != img.Height)) {
+			img.Resize(newWidth, newHeight);
+			cam.Resize(newWidth, newHeight);
+			renderer.SetImage(img);
+			renderer.ResetFrameIndex();
+		}
+
 		ImGui::Image((uintptr_t)renderer.GetRenderID(), ImVec2((float)img.Width, (float)img.Height), ImVec2(0, 1), ImVec2(1, 0));
 		ImGui::End();
 

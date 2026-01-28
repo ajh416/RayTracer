@@ -9,6 +9,8 @@
 #include "OpenGL/Shader.h"
 #include "OpenGL/Texture.h"
 
+#include <glad/glad.h>
+
 struct RenderSettings
 {
 	int NumberOfSamples = 1;
@@ -20,7 +22,11 @@ class Renderer
 {
 public:
 	Renderer() = default;
-	~Renderer() { delete[] m_AccumulationData; delete m_RenderTexture; }
+	~Renderer() {
+		delete[] m_AccumulationData;
+		delete m_RenderTexture;
+		if (m_AccumulationTexture) glDeleteTextures(1, &m_AccumulationTexture);
+	}
 
 	void Render(const Scene& scene, Camera& cam);
 	void RenderGPU(const Scene& scene, const Camera& cam);
@@ -48,6 +54,7 @@ private:
 	constexpr HitPayload Miss(const Ray& ray);
 
 	void SetupGPUBuffers(const Scene& scene);
+	void ResizeGPUTextures(uint32_t width, uint32_t height);
 
 	Image* m_Image = nullptr;
 	glm::vec3* m_AccumulationData = nullptr;
@@ -97,5 +104,7 @@ private:
 	uint32_t m_TriangleSize, m_MeshSize;
 	uint32_t m_QuadVAO, m_QuadVBO;
 	uint32_t m_Framebuffer, m_FramebufferTexture, m_RenderBuffer;
+	uint32_t m_AccumulationTexture = 0;
+	uint32_t m_GPUTextureWidth = 0, m_GPUTextureHeight = 0;
 	uint32_t m_TriangleSSBO, m_MeshSSBO, m_MaterialSSBO;
 };
